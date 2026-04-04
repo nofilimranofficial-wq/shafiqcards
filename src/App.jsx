@@ -12,6 +12,7 @@ import CardsDetails from './pages/CardsDetails';
 import WebInvites from './pages/WebInvites';
 import TemplatePreview from './pages/TemplatePreview';
 import CreateInvitation from './pages/CreateInvitation';
+import EditInvitation from './pages/EditInvitation';
 import InvitationPage from './pages/InvitationPage';
 import useGsap from './hooks/useGsap';
 
@@ -52,6 +53,7 @@ const App = () => {
           <Route path="/web-invites" element={<WebInvites />} />
           <Route path="/preview/:templateId" element={<TemplatePreview />} />
           <Route path="/create-invitation" element={<CreateInvitation />} />
+          <Route path="/edit/:slug" element={<EditInvitation />} />
           <Route path="/card/:index" element={<CardsDetails />} />
           <Route path="/product/:type/:index" element={<CardsDetails />} />
         </Route>

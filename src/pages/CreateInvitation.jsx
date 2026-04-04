@@ -45,6 +45,7 @@ const CreateInvitation = () => {
 
   const [form, setForm] = useState({
     email: '',
+    password: '',
     whatsappNumber: '',
     brideName: '',
     groomName: '',
@@ -71,8 +72,12 @@ const CreateInvitation = () => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setError('');
-    if (!form.brideName.trim() || !form.groomName.trim() || !form.email.trim()) {
-      setError('Bride name, Groom name, and Email address are required.');
+    if (!form.brideName.trim() || !form.groomName.trim() || !form.email.trim() || !form.password.trim()) {
+      setError('Bride name, Groom name, Email, and Password are required.');
+      return;
+    }
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
     setSubmitting(true);
@@ -85,7 +90,9 @@ const CreateInvitation = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 503) {
+        if (res.status === 409) {
+          setError(`This email is already associated with an existing invitation. Please delete the existing invitation first before creating a new one.`);
+        } else if (res.status === 503) {
           setError('SERVICE_UNAVAILABLE');
         } else {
           setError(data.message || 'OTP request failed');
@@ -112,6 +119,7 @@ const CreateInvitation = () => {
       formData.append('brideName', form.brideName.trim());
       formData.append('groomName', form.groomName.trim());
       formData.append('email', form.email.trim());
+      formData.append('password', form.password.trim());
       formData.append('whatsappNumber', form.whatsappNumber.trim());
       formData.append('otp', otpCode.trim());
       if (form.weddingDate) formData.append('weddingDate', form.weddingDate);
@@ -131,7 +139,22 @@ const CreateInvitation = () => {
         body: formData,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Verification failed');
+      if (!res.ok) {
+        if (res.status === 409) {
+          throw new Error('This email is already associated with an existing invitation. Please delete the existing invitation first before creating a new one.');
+        } else {
+          throw new Error(data.message || 'Verification failed');
+        }
+      }
+
+      const authData = {
+        token: data.token,
+        slug: data.slug,
+        invitation: data.invitation,
+      };
+      localStorage.setItem('invitationAuth', JSON.stringify(authData));
+      document.cookie = `invitationAuth=${encodeURIComponent(JSON.stringify(authData))}; max-age=${60 * 60 * 24 * 7}; path=/; samesite=lax`;
+
       setOtpModal(false);
       navigate(`/${data.slug}`);
     } catch (err) {
@@ -268,6 +291,21 @@ const CreateInvitation = () => {
                       value={form.email}
                       onChange={(e) => set('email', e.target.value)}
                       placeholder="your.email@gmail.com"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      One email = one invitation. If you already have an invitation, delete it first to create a new one.
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass}>Password (to edit your invitation later) *</label>
+                    <input
+                      type="password"
+                      className={inputClass}
+                      required
+                      value={form.password}
+                      onChange={(e) => set('password', e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      minLength="6"
                     />
                   </div>
                   <div className="sm:col-span-2">

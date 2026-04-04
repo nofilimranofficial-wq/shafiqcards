@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import { getInvitationAuth } from '../utils/invitationAuth';
+import AdminNavbar from '../components/AdminNavbar';
 
 const InvitationPage = () => {
   const { slug } = useParams();
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
+  const [invitationAuth, setInvitationAuth] = useState(null);
+
+  useEffect(() => {
+    const auth = getInvitationAuth();
+    if (auth?.slug === slug) {
+      setInvitationAuth(auth);
+    }
+  }, [slug]);
 
   useEffect(() => {
     const fetchInvitation = async () => {
@@ -23,6 +33,38 @@ const InvitationPage = () => {
     };
     fetchInvitation();
   }, [slug]);
+
+  // Check if invitation is disabled
+  if (data && data.disabled) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(135deg, #0d0806, #1f110a)',
+        flexDirection: 'column', gap: 20, padding: 24, textAlign: 'center',
+      }}>
+        <span style={{ fontSize: '4rem' }}>🚫</span>
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '2rem', color: '#fff', margin: 0 }}>
+          Invitation Disabled
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.4)', maxWidth: 380 }}>
+          This wedding invitation has been temporarily disabled by the owner.
+        </p>
+        {invitationAuth && (
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: 16, padding: '14px 36px', borderRadius: 999,
+              background: 'linear-gradient(90deg, #c59d5f, #b8863f)',
+              color: '#fff', border: 'none', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.1em',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+        )}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -72,11 +114,35 @@ const InvitationPage = () => {
 
   /* Template switcher — we render all templates via the backend HTML engine */
   return (
-    <iframe 
-      src={`${API_BASE_URL}/web-invitations/html/${slug}`} 
-      style={{width: '100%', height: '100vh', border: 'none', margin: 0, padding: 0, display: 'block'}} 
-      title="Wedding Invitation" 
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      <iframe 
+        src={`${API_BASE_URL}/web-invitations/html/${slug}`} 
+        style={{
+          width: '100%', 
+          height: '100vh', 
+          border: 'none', 
+          margin: 0, 
+          padding: 0, 
+          display: 'block',
+          transform: invitationAuth ? 'translateY(60px)' : 'translateY(0)',
+          height: invitationAuth ? 'calc(100vh - 60px)' : '100vh'
+        }}
+        title="Wedding Invitation"
+      />
+      
+      {/* Floating Admin Navbar for Authenticated Users */}
+      {invitationAuth && (
+        <AdminNavbar 
+          slug={slug} 
+          invitationAuth={invitationAuth}
+          invitationData={data}
+          onStatusChange={(disabled) => {
+            // Optionally update local state if needed
+            console.log('Invitation status changed:', disabled);
+          }}
+        />
+      )}
+    </div>
   );
 };
 

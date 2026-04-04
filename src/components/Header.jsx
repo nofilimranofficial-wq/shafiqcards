@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { isAuthenticated } from '../utils/api';
+import InvitationLogin from './InvitationLogin';
 import logo from '../assets/golden.webp';
 
 const NAV = [
@@ -20,48 +21,20 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
+  const [loginModal, setLoginModal] = useState(false);
+  const [invitationAuth, setInvitationAuth] = useState(null);
   const menuRef = useRef(null);
   const popupRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-    const query = searchQuery.toLowerCase();
-    let path = '/';
-    let isValidCode = false;
-    if (query.startsWith('sfc-')) {
-      const num = parseInt(query.split('-')[1]);
-      if (num >= 1101 && num <= 1200) {
-        path = '/invitations';
-        isValidCode = true;
-      } else if (num >= 2101 && num <= 2150) {
-        path = '/envelopes';
-        isValidCode = true;
-      } else {
-        setPopupMessage('This Type Of Code Design Does Not Added Yet.');
-        setShowPopup(true);
-        setSearchOpen(false);
-        setSearchQuery('');
-        return;
-      }
-    } else if (query.startsWith('sfc-box-')) {
-      path = '/box-packaging';
-      isValidCode = true;
-    } else if (query.startsWith('sfc-reel-')) {
-      path = '/digital-invites';
-      isValidCode = true;
-    } else if (query.includes('invitation') || query.includes('card')) {
-      path = '/invitations';
-    } else if (query.includes('envelope')) {
-      path = '/envelopes';
-    } else if (query.includes('box') || query.includes('corporate') || query.includes('packaging')) {
-      path = '/box-packaging';
-    } else if (query.includes('digital') || query.includes('reel')) {
-      path = '/digital-invites';
-    }
-    navigate(`${path}?search=${encodeURIComponent(searchQuery)}`);
-    setSearchOpen(false);
-    setSearchQuery('');
+  const handleLoginSuccess = (invitation) => {
+    setInvitationAuth(invitation);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('invitationAuth');
+    setInvitationAuth(null);
+    navigate('/');
   };
 
   useEffect(() => {
@@ -69,10 +42,23 @@ const Header = () => {
       if (e.key === 'Escape') {
         setOpen(false);
         setSearchOpen(false);
+        setLoginModal(false);
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    // Check for invitation auth
+    const auth = localStorage.getItem('invitationAuth');
+    if (auth) {
+      try {
+        setInvitationAuth(JSON.parse(auth));
+      } catch (e) {
+        localStorage.removeItem('invitationAuth');
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -144,8 +130,35 @@ const Header = () => {
             >
               <span className="material-symbols-outlined">{searchOpen ? 'close' : 'search'}</span>
             </button>
-            {/* <Link to="/account" className="hidden md:inline-flex text-slate-700">Account</Link>
-            <Link to="/cart" className="hidden md:inline-flex text-slate-700">Cart (0)</Link> */}
+
+            {/* Invitation Login/Logout */}
+            {invitationAuth ? (
+              <div className="hidden md:flex items-center gap-3">
+                <span className="text-sm text-slate-600">
+                  Welcome, {invitationAuth.brideName} & {invitationAuth.groomName}
+                </span>
+                <Link
+                  to={`/edit/${invitationAuth.slug}`}
+                  className="px-4 py-2 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition text-sm"
+                >
+                  Edit Invitation
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setLoginModal(true)}
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition text-sm"
+              >
+                <span className="material-symbols-outlined text-sm">login</span>
+                Login to Edit
+              </button>
+            )}
 
             <button
               aria-expanded={open}
@@ -187,6 +200,42 @@ const Header = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
+
+            {/* Mobile Invitation Auth */}
+            {invitationAuth ? (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-600 px-2">
+                  Logged in as {invitationAuth.brideName} & {invitationAuth.groomName}
+                </p>
+                <Link
+                  to={`/edit/${invitationAuth.slug}`}
+                  onClick={() => setOpen(false)}
+                  className="block px-4 py-3 rounded-lg bg-[#c59d5f] text-white text-center font-medium"
+                >
+                  Edit Invitation
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="block w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-700 text-center font-medium"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setLoginModal(true);
+                  setOpen(false);
+                }}
+                className="px-4 py-3 rounded-lg bg-[#c59d5f] text-white text-center font-medium"
+              >
+                Login to Edit Invitation
+              </button>
+            )}
+
             <Link to="/quote" className="px-4 py-3 rounded-lg btn-gold text-center font-bold">Request a Quote</Link>
           </div>
         </div>
@@ -206,6 +255,13 @@ const Header = () => {
     </div>
   </div>
 )}
+
+      {/* Invitation Login Modal */}
+      <InvitationLogin
+        isOpen={loginModal}
+        onClose={() => setLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
 
     </header>
   );
