@@ -1,7 +1,7 @@
 // Centralized API configuration
 
 const defaultBackend = import.meta.env.VITE_BACKEND_URL || 'https://shafiqcards-backend.onrender.com';
-
+//
 export const API_BASE_URL = `${defaultBackend}/api`;
 
 // Helper to fetch products by category
