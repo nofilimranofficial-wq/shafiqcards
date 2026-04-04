@@ -4,6 +4,8 @@ const defaultBackend = import.meta.env.VITE_BACKEND_URL || 'https://shafiqcards-
 
 export const API_BASE_URL = `${defaultBackend}/api`;
 //
+
+
 // Helper to fetch products by category
 export const fetchProductsByCategory = async (category, page = 1, limit = 100) => {
   try {
