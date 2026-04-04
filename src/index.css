@@ -1,0 +1,92 @@
+.root {
+	--gold: #c59d5f;
+	--gold-700: #b8863f;
+	--muted: #111214;
+}
+
+@import "tailwindcss";
+
+/* Base font + selection */
+html, body {
+	font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	scroll-behavior: smooth;
+}
+::selection { background: rgba(197,157,95,0.18); }
+
+/* Theme tokens */
+.btn-gold {
+	background: linear-gradient(90deg, var(--gold), var(--gold-700));
+	color: white;
+	box-shadow: 0 8px 30px rgba(197,157,95,0.18);
+}
+
+/* Custom 3D hero and card styles */
+.hero-wrap {
+	perspective: 1200px;
+	width: 320px;
+	height: 220px;
+}
+
+/* Display serif helper for elegant headings */
+.display-serif {
+	font-family: 'Playfair Display', serif;
+}
+
+/* Slider card styling */
+.slider-card {
+	border-radius: 20px;
+	box-shadow: 0 30px 60px rgba(15, 23, 42, 0.15);
+}
+.card-stack {
+	width: 100%;
+	height: 100%;
+	position: relative;
+	transform-style: preserve-3d;
+}
+.inv-card {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform-origin: center;
+	width: 220px;
+	height: 140px;
+	border-radius: 14px;
+	box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backface-visibility: hidden;
+	transition: transform 450ms cubic-bezier(.2,.9,.2,1), box-shadow 350ms;
+	background: linear-gradient(135deg, rgba(255,250,240,1), rgba(255,244,230,0.9));
+}
+.inv-card .inv-decor{
+	font-weight:700;
+	color: #7f1d1d;
+	letter-spacing: 0.6px;
+}
+.inv-card-1 { transform: translate(-50%,-50%) rotateY(-18deg) rotateZ(-6deg) translateZ(-30px); }
+.inv-card-2 { transform: translate(-50%,-50%) rotateY(6deg) rotateZ(4deg) translateZ(10px); }
+.inv-card-3 { transform: translate(-50%,-50%) rotateY(18deg) rotateZ(10deg) translateZ(50px); }
+.hero-wrap:hover .inv-card-1 { transform: translate(-50%,-50%) rotateY(-6deg) rotateZ(-2deg) translateZ(-10px); }
+.hero-wrap:hover .inv-card-2 { transform: translate(-50%,-50%) rotateY(0deg) rotateZ(0deg) translateZ(30px); }
+.hero-wrap:hover .inv-card-3 { transform: translate(-50%,-50%) rotateY(6deg) rotateZ(6deg) translateZ(70px); }
+
+@keyframes floatY {
+	0% { transform: translateY(0); }
+	50% { transform: translateY(-6px); }
+	100% { transform: translateY(0); }
+}
+.card-stack { animation: floatY 4s ease-in-out infinite; }
+
+/* Service card 3D tilt */
+.tilt-card {
+	transform-style: preserve-3d;
+	will-change: transform;
+}
+.tilt-card:hover { transform: translateY(-6px) rotateX(6deg); }
+
+/* Small responsive tweak */
+@media (min-width: 1024px) {
+	.hero-wrap { width: 420px; height: 300px; }
+	.inv-card { width: 300px; height: 180px; border-radius: 18px; }
+}
