@@ -1,6 +1,6 @@
 // Centralized API configuration
 
-const defaultBackend = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const defaultBackend = import.meta.env.VITE_BACKEND_URL || 'https://shafiqcards-backend.onrender.com';
 
 export const API_BASE_URL = `${defaultBackend}/api`;
 //
