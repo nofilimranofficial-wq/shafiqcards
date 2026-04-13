@@ -2,6 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById, updateProduct } from "../../utils/api";
 
+const extractFieldFromDescription = (description = '', label) => {
+  const regex = new RegExp(`${label}:\\s*([^\\n]+)`, 'i');
+  return description?.match(regex)?.[1]?.trim() || '';
+};
+
+const stripMetadataFromDescription = (description = '') => {
+  return description
+    .replace(/Price:\s*\d+[\d,]*\s*/gi, '')
+    .replace(/Card Number:\s*[^\n]+\s*/gi, '')
+    .trim();
+};
+
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,27 +31,23 @@ const EditProduct = () => {
     isActive: true
   });
   const [existingMedia, setExistingMedia] = useState([]);
-  const [newFiles, setNewFiles] = useState([]);
   const [removedMedia, setRemovedMedia] = useState([]);
+  const [newFiles, setNewFiles] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const product = await getProductById(id);
-        const priceMatch = product.description?.match(/Price:\s*(\d+)/);
-        const codeMatch = product.description?.match(/Card Number:\s*([^\n]+)/);
-        const baseDescription = product.description
-          ?.replace(/Price:\s*\d+\s*/, "")
-          ?.replace(/Card Number:\s*[^\n]+\s*/, "")
-          ?.trim();
+        const sanitizedDescription = stripMetadataFromDescription(product.description || '');
+        const cardNumber = extractFieldFromDescription(product.description || '', 'Card Number');
 
         setFormData({
-          title: product.title,
-          category: product.category,
-          price: priceMatch ? priceMatch[1] : "",
-          cardNumber: codeMatch ? codeMatch[1].trim() : "",
-          description: baseDescription || "",
-          isActive: product.isActive
+          title: product.title || '',
+          category: product.category || 'invitation',
+          price: product.price || '',
+          cardNumber,
+          description: sanitizedDescription,
+          isActive: product.isActive !== false
         });
         setExistingMedia(product.mediaUrls || []);
       } catch (err) {
@@ -73,14 +81,16 @@ const EditProduct = () => {
 
     try {
       const submitData = new FormData();
-      submitData.append("title", formData.title);
+      submitData.append("title", formData.title || '');
       submitData.append("category", formData.category);
+      submitData.append("price", formData.price || '');
       submitData.append("isActive", formData.isActive);
-      
-      const fullDescription = `${formData.description}\n\nPrice: ${formData.price}\nCard Number: ${formData.cardNumber}`;
-      submitData.append("description", fullDescription);
 
-      // Send the updated media URLs (existing minus removed)
+      let descriptionText = stripMetadataFromDescription(formData.description || '');
+      if (formData.cardNumber) {
+        descriptionText = `${descriptionText}${descriptionText ? '\n\n' : ''}Card Number: ${formData.cardNumber}`;
+      }
+      submitData.append("description", descriptionText);
       submitData.append("mediaUrls", JSON.stringify(existingMedia));
 
       if (newFiles.length > 0) {
@@ -102,29 +112,29 @@ const EditProduct = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="w-12 h-12 border-4 border-[#c59d5f]/20 border-t-[#c59d5f] rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-400 rounded-full animate-spin"></div>
         <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">Fetching Details...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto bg-[#111214] border border-white/5 p-8 md:p-12 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10 border-b border-white/5 pb-8">
+    <div className="max-w-4xl mx-auto bg-white border border-slate-200 p-8 md:p-12 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10 border-b border-slate-200 pb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white display-serif">Edit Masterpiece</h1>
-          <p className="text-slate-500 mt-1 font-medium">Refine the details of your fine collection.</p>
+          <h1 className="text-3xl font-bold text-slate-900 display-serif">Edit Masterpiece</h1>
+          <p className="text-slate-600 mt-1 font-medium">Refine the details of your fine collection.</p>
         </div>
         <button 
           onClick={() => navigate('/admin/products')}
-          className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[#c59d5f] transition-colors"
+          className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-colors"
         >
           Discard Changes
         </button>
       </div>
 
-      {error && <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-sm font-medium">{error}</div>}
-      {success && <div className="mb-8 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl text-sm font-medium">Changes preserved successfully. Returning to vault...</div>}
+      {error && <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm font-medium">{error}</div>}
+      {success && <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-sm font-medium">Changes preserved successfully. Returning to vault...</div>}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -132,7 +142,7 @@ const EditProduct = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
             <input 
               type="text" required name="title" value={formData.title} onChange={handleChange}
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c59d5f]/50 transition-all text-sm"
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-slate-300 transition-all text-sm"
             />
           </div>
 
@@ -140,7 +150,7 @@ const EditProduct = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
             <select 
               name="category" value={formData.category} onChange={handleChange} required
-              className="w-full px-5 py-4 bg-[#1a1b1e] border border-white/10 text-white rounded-2xl focus:outline-none transition-all text-sm appearance-none cursor-pointer"
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm appearance-none cursor-pointer"
             >
               <option value="invitation">Wedding Invitation</option>
               <option value="envelope">Premium Envelope</option>
@@ -153,7 +163,7 @@ const EditProduct = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Price (PKR)</label>
             <input 
                type="number" name="price" value={formData.price} onChange={handleChange}
-               className="w-full px-5 py-4 bg-white/5 border border-white/10 text-white rounded-2xl focus:outline-none transition-all text-sm"
+               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm"
             />
           </div>
 
@@ -161,7 +171,7 @@ const EditProduct = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Code</label>
             <input 
                type="text" name="cardNumber" value={formData.cardNumber} onChange={handleChange}
-               className="w-full px-5 py-4 bg-white/5 border border-white/10 text-white rounded-2xl focus:outline-none transition-all text-sm"
+               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm"
             />
           </div>
         </div>
@@ -170,14 +180,14 @@ const EditProduct = () => {
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
           <textarea 
             required name="description" value={formData.description} onChange={handleChange} rows="5"
-            className="w-full px-5 py-4 bg-white/5 border border-white/10 text-white rounded-2xl focus:outline-none transition-all text-sm resize-none"
+            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm resize-none"
           ></textarea>
         </div>
 
         {/* Existing Media Preview */}
         <div className="space-y-4">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Existing Assets</label>
-          <div className="flex flex-wrap gap-4 p-6 bg-[#0a0a0b] border border-white/5 rounded-[2rem]">
+          <div className="flex flex-wrap gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem]">
             {existingMedia.map((url, i) => (
               <div key={i} className="relative group w-24 h-24 rounded-2xl overflow-hidden border border-white/10 shadow-lg hover:scale-105 transition-transform duration-300">
                 {formData.category === 'reel' ? (
@@ -202,11 +212,11 @@ const EditProduct = () => {
         {/* Upload New Media */}
         <div className="space-y-2">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Add New Media (+)</label>
-          <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-white/5 border-dashed rounded-[2rem] hover:border-[#c59d5f]/30 transition-all bg-[#0a0a0b] group">
+          <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-slate-200 border-dashed rounded-[2rem] hover:border-slate-400 transition-all bg-slate-50 group">
             <div className="space-y-4 text-center">
-              <span className="material-symbols-outlined text-5xl text-slate-700 group-hover:text-[#c59d5f] transition-colors">upload_file</span>
+              <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-slate-600 transition-colors">upload_file</span>
               <div className="text-sm text-slate-500">
-                <label className="relative cursor-pointer rounded-xl font-bold text-[#c59d5f] hover:text-[#b8863f] transition-colors focus-within:outline-none">
+                <label className="relative cursor-pointer rounded-xl font-bold text-slate-700 hover:text-slate-900 transition-colors focus-within:outline-none">
                   <span>Select additional files</span>
                   <input type="file" multiple name="media" onChange={handleFileChange} className="sr-only" accept="image/*,video/mp4,video/quicktime" />
                 </label>
@@ -219,20 +229,20 @@ const EditProduct = () => {
            <div className="flex items-center gap-3">
               <input 
                 type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange}
-                id="isActive" className="w-5 h-5 rounded-lg border-white/10 bg-white/5 text-[#c59d5f] focus:ring-[#c59d5f]/50 cursor-pointer"
+                id="isActive" className="w-5 h-5 rounded-lg border-slate-300 bg-white text-slate-900 focus:ring-slate-300 cursor-pointer"
               />
-              <label htmlFor="isActive" className="text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer">Published to site</label>
+              <label htmlFor="isActive" className="text-xs font-bold text-slate-600 uppercase tracking-widest cursor-pointer">Published to site</label>
            </div>
            <div className="flex gap-4">
               <button 
                 type="button" onClick={() => navigate('/admin/products')}
-                className="px-8 py-4 bg-white/5 text-slate-400 font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-white/10 transition-all"
+                className="px-8 py-4 bg-slate-100 text-slate-700 font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-slate-200 transition-all"
               >
                 Cancel
               </button>
               <button 
                 type="submit" disabled={submitting}
-                className={`px-10 py-4 bg-gradient-to-r from-[#c59d5f] to-[#b8863f] text-white font-bold uppercase tracking-widest text-xs rounded-2xl shadow-xl transition-all active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-10 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-xs rounded-2xl shadow-lg transition-all active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {submitting ? 'Syncing...' : 'Update Product'}
               </button>

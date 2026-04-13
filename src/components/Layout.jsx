@@ -14,6 +14,7 @@ const Layout = ({ children }) => {
     pathParts.length === 1 &&
     invitationAuth?.slug &&
     invitationAuth.slug === pathParts[0];
+  const isWebInvitesPage = location.pathname === '/web-invites' || location.pathname.startsWith('/web-invites/');
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
@@ -22,7 +23,7 @@ const Layout = ({ children }) => {
         {children || <Outlet />}
       </main>
       <Footer />
-      {!isAuthInvitationPage && <AiChatbot />}
+      {!isAuthInvitationPage && !isWebInvitesPage && <AiChatbot />}
       <WhatsAppButton />
     </div>
   );

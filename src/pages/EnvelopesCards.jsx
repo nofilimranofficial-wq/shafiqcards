@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import useGsap from '../hooks/useGsap';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 import { fetchProductsByCategory } from '../config';
 
 // Small carousel component that auto-rotates through `images`.
@@ -119,6 +120,30 @@ const EnvelopesCards = () => {
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
 
+  const loadMoreItems = useCallback(() => {
+    if (isLoading || visibleCount >= filteredItems.length) return;
+    setIsLoading(true);
+    window.setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + 20, filteredItems.length));
+      setIsLoading(false);
+    }, 650);
+  }, [filteredItems.length, isLoading, visibleCount]);
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: !loading && filteredItems.length > 0,
+    onLoadMore: loadMoreItems,
+    hasMore: visibleCount < filteredItems.length,
+    isLoading,
+    rootMargin: '400px',
+    threshold: 0.1,
+  });
+
+  useEffect(() => {
+    if (visibleCount > filteredItems.length) {
+      setVisibleCount(filteredItems.length);
+    }
+  }, [filteredItems.length, visibleCount]);
+
   useEffect(() => {
     if (!containerRef.current || loading) return;
 
@@ -213,27 +238,15 @@ const EnvelopesCards = () => {
             </div>
 
             {visibleCount < filteredItems.length && (
-              <div className="text-center mt-12">
-                <button
-                  onClick={() => {
-                    setIsLoading(true);
-                    setTimeout(() => {
-                      setVisibleCount(prev => Math.min(prev + 20, filteredItems.length));
-                      setIsLoading(false);
-                    }, 1000);
-                  }}
-                  disabled={isLoading}
-                  className="px-8 py-3 bg-gray-500 text-white rounded-none font-bold animate-pulse shadow-lg hover:shadow-xl hover:bg-gray-400 hover:scale-105 transition-all duration-200 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="animate-spin">⟳</span>
-                      Loading...
-                    </span>
-                  ) : (
-                    'Show More Envelopes'
-                  )}
-                </button>
+              <div ref={sentinelRef} className="text-center mt-12 py-8">
+                {isLoading ? (
+                  <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-700 rounded-full shadow-inner">
+                    <span className="animate-spin">⟳</span>
+                    Loading more designs...
+                  </div>
+                ) : (
+                  <div className="text-slate-500">Scroll down to load more designs</div>
+                )}
               </div>
             )}
 

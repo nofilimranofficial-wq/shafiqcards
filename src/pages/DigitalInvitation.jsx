@@ -1,17 +1,21 @@
 import { formatDescription } from '../utils/api';
 import React, { useRef, useState, useEffect } from 'react';
 
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { fetchProductsByCategory } from '../config';
 
 
 const DigitalInvitation = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const search = searchParams.get('search') || '';
   const [visibleReels, setVisibleReels] = useState(8);
   const [isLoading, setIsLoading] = useState(false);
   const [reels, setReels] = useState([]);
+  const videoRefs = useRef([]);
+  const pauseTimersRef = useRef([]);
+  const playTimersRef = useRef([]);
   
   useEffect(() => {
     const loadReels = async () => {
@@ -42,6 +46,43 @@ const DigitalInvitation = () => {
     return item.code.toLowerCase().includes(search.toLowerCase()) || item.name.toLowerCase().includes(search.toLowerCase());
   });
   
+  useEffect(() => {
+    if (isLoading || filteredReels.length === 0) return;
+
+    playTimersRef.current.forEach(clearTimeout);
+    pauseTimersRef.current.forEach(clearTimeout);
+    playTimersRef.current = [];
+    pauseTimersRef.current = [];
+
+    filteredReels.slice(0, visibleReels).forEach((item) => {
+      const video = videoRefs.current[item.originalIdx];
+      if (!video) return;
+
+      const playTimer = window.setTimeout(async () => {
+        try {
+          await video.play();
+        } catch (err) {
+          return;
+        }
+
+        const pauseTimer = window.setTimeout(() => {
+          if (!video.paused) {
+            video.pause();
+          }
+        }, 2000);
+
+        pauseTimersRef.current.push(pauseTimer);
+      }, 2000);
+
+      playTimersRef.current.push(playTimer);
+    });
+
+    return () => {
+      playTimersRef.current.forEach(clearTimeout);
+      pauseTimersRef.current.forEach(clearTimeout);
+    };
+  }, [isLoading, filteredReels, visibleReels]);
+
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,19 +96,31 @@ const DigitalInvitation = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {isLoading ? (
             <div className="col-span-full py-20 text-center text-slate-500">Loading reels...</div>
-          ) : filteredReels.slice(0, visibleReels).map(({ reel, originalIdx, code, name }) => (
+          ) : filteredReels.slice(0, visibleReels).map(({ reel, originalIdx, code, name, id }) => (
             <div
               key={originalIdx}
-              className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/digital-invites/${id}`)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  navigate(`/digital-invites/${id}`);
+                }
+              }}
             >
               {reel ? (
                 <video
+                  ref={(el) => (videoRefs.current[originalIdx] = el)}
                   src={reel}
-                  className="w-full h-96 object-cover"
+                  className="w-full h-96 object-cover bg-slate-900"
                   muted
                   playsInline
                   preload="metadata"
-                  controls
+                  loop
+                  onMouseEnter={() => videoRefs.current[originalIdx]?.play()}
+                  onMouseLeave={() => videoRefs.current[originalIdx]?.pause()}
                 />
               ) : (
                 <div className="w-full h-96 bg-slate-200 flex items-center justify-center text-slate-400">No Video</div>
@@ -80,6 +133,7 @@ const DigitalInvitation = () => {
                   href={`https://wa.me/923492578726?text=Kindly give me the details of this ${code}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                   className="inline-block px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full font-semibold text-sm transition-colors duration-200"
                 >
                   Order via WhatsApp

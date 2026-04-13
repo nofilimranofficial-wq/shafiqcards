@@ -81,6 +81,56 @@ export const deleteProduct = async (id) => {
   return data;
 };
 
+// Admin traffic summary
+export const getTrafficSummary = async () => {
+  const res = await fetch(`${API_BASE_URL}/web-invitations/traffic`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` }
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to fetch traffic summary');
+  return data.data;
+};
+
+// Admin list
+export const getAdminList = async () => {
+  const res = await fetch(`${API_BASE_URL}/admin/list`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` }
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to fetch admin list');
+  return data.data;
+};
+
+// Create new admin
+export const createAdmin = async (payload) => {
+  const res = await fetch(`${API_BASE_URL}/admin/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to create admin');
+  return data;
+};
+
+// Change admin password
+export const changeAdminPassword = async (id, password) => {
+  const res = await fetch(`${API_BASE_URL}/admin/${id}/password`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({ password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to update admin password');
+  return data;
+};
+
 // Helper to strip price from description if not admin
 export const formatDescription = (description = '') => {
   if (typeof description !== 'string') return description;

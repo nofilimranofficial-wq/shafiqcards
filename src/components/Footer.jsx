@@ -25,12 +25,13 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <h6 className="font-bold mb-4 text-sm uppercase tracking-widest">Services</h6>
+            <h6 className="font-bold mb-4 text-sm uppercase tracking-widest">Blog</h6>
             <ul className="space-y-3 text-sm text-slate-600">
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Custom Design</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Foil Printing</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Global Logistics</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Brand Packaging</a></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/weddingcards-in-pakistan">Wedding Cards in Pakistan</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/weddingcards-in-uae">Wedding Cards in UAE</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/beautiful-weddingcards">Beautiful Wedding Cards</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/weddingstationery">Wedding Stationery</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/wedding-invitations">Wedding Invitations</Link></li>
             </ul>
           </div>
           <div>

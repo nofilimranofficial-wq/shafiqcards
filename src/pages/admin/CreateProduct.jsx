@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProduct } from '../../utils/api';
 
@@ -17,6 +17,7 @@ const CreateProduct = () => {
     isActive: true,
   });
   const [files, setFiles] = useState([]);
+  const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, type, checked, value } = e.target;
@@ -42,24 +43,35 @@ const CreateProduct = () => {
     
     // Build multipart/form-data
     const submitData = new FormData();
-    submitData.append('title', formData.title);
+    submitData.append('title', formData.title || '');
     submitData.append('category', formData.category);
-    
-    // Merge extra fields into description
-    const fullDescription = `${formData.description}\n\nPrice: ${formData.price}\nCard Number: ${formData.cardNumber}`;
-    submitData.append('description', fullDescription);
+    submitData.append('price', formData.price || '');
 
-    // Append multiple files
+    let descriptionText = formData.description || '';
+    if (formData.cardNumber) {
+      descriptionText = `${descriptionText}${descriptionText ? '\n\n' : ''}Card Number: ${formData.cardNumber}`;
+    }
+    submitData.append('description', descriptionText);
+
     for (let i = 0; i < files.length; i++) {
-      submitData.append('media', files[i]); // "media" is the field name multer expects
+      submitData.append('media', files[i]);
     }
 
     try {
       await createProduct(submitData);
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 1500);
+      setFormData({
+        title: '',
+        category: 'invitation',
+        description: '',
+        price: '',
+        cardNumber: '',
+        isActive: true,
+      });
+      setFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       setError(err.message || 'Error creating product. Validation failed or files were too large.');
     } finally {
@@ -83,23 +95,23 @@ const CreateProduct = () => {
       </div>
 
       {error && <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-sm font-medium">{error}</div>}
-      {success && <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-sm font-medium">Product finalized and published! Redirecting to vault...</div>}
+      {success && <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-sm font-medium">Product finalized and published. You can add another product or stay on this page.</div>}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title *</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
             <input 
-              type="text" required name="title" value={formData.title} onChange={handleChange}
+              type="text" name="title" value={formData.title} onChange={handleChange}
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 placeholder-slate-400 shadow-sm"
               placeholder="e.g. Royal Gilded Invitation"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category *</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
             <select 
-              name="category" value={formData.category} onChange={handleChange} required
+              name="category" value={formData.category} onChange={handleChange}
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 cursor-pointer shadow-sm appearance-none"
             >
               <option value="invitation">Wedding Invitation</option>
@@ -129,9 +141,9 @@ const CreateProduct = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Detailed Description *</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Detailed Description</label>
           <textarea 
-            required name="description" value={formData.description} onChange={handleChange} rows="5"
+            name="description" value={formData.description} onChange={handleChange} rows="5"
             className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 placeholder-slate-400 shadow-sm resize-none"
             placeholder="Describe the craftsmanship, paper quality, and artistic details..."
           ></textarea>
@@ -147,7 +159,7 @@ const CreateProduct = () => {
               <div className="flex flex-col text-sm text-slate-500">
                 <label className="relative cursor-pointer rounded-xl font-bold text-amber-600 hover:text-amber-700 transition-colors focus-within:outline-none">
                   <span>Click to select media</span>
-                  <input type="file" multiple name="media" onChange={handleFileChange} className="sr-only" required accept="image/*,video/mp4,video/quicktime" />
+                  <input ref={fileInputRef} type="file" multiple name="media" onChange={handleFileChange} className="sr-only" accept="image/*,video/mp4,video/quicktime" />
                 </label>
                 <p className="mt-1">Drag and drop assets here</p>
               </div>

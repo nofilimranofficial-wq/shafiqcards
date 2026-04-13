@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import useGsap from '../hooks/useGsap';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 import details from '../data/Detail.json';
 import { fetchProductsByCategory } from '../config';
 
@@ -34,7 +35,7 @@ const CardCarousel = ({ images = [], alt = '', interval = 2500, onHoverAdvance }
     <img
       src={images[idx]}
       alt={alt}
-      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+      className="w-full h-full object-cover bg-slate-100 transition-transform duration-500 hover:scale-105"
       loading="lazy"
       onMouseEnter={() => {
         if (onHoverAdvance) onHoverAdvance();
@@ -128,6 +129,30 @@ const InvitationCards = () => {
   const cardRefs = useRef([]);
   const [loaded, setLoaded] = useState(false);
 
+  const loadMoreItems = useCallback(() => {
+    if (isLoading || visibleCount >= filteredItems.length) return;
+    setIsLoading(true);
+    const timer = window.setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + 20, filteredItems.length));
+      setIsLoading(false);
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [filteredItems.length, isLoading, visibleCount]);
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: !loading && filteredItems.length > 0,
+    onLoadMore: loadMoreItems,
+    hasMore: visibleCount < filteredItems.length,
+    isLoading,
+    rootMargin: '400px',
+    threshold: 0.1,
+  });
+
+  useEffect(() => {
+    if (visibleCount > filteredItems.length) {
+      setVisibleCount(filteredItems.length);
+    }
+  }, [filteredItems.length, visibleCount]);
 
   useEffect(() => {
     if (!containerRef.current || loading) return;
@@ -202,7 +227,7 @@ const InvitationCards = () => {
                   className="flex flex-col items-center gap-3"
                 >
                   <Link to={`/card/${index}?id=${id}`} className="block w-full">
-                    <div className="overflow-hidden rounded-2xl w-full aspect-[3/4] bg-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300 relative group">
+                    <div className="overflow-hidden rounded-2xl w-full aspect-[2/3] bg-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300 relative group">
                       <CardCarousel images={srcs} alt={name} />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                         <a
@@ -225,27 +250,15 @@ const InvitationCards = () => {
             </div>
 
             {visibleCount < filteredItems.length && (
-              <div className="text-center mt-12">
-                <button
-                  onClick={() => {
-                    setIsLoading(true);
-                    setTimeout(() => {
-                      setVisibleCount(prev => Math.min(prev + 20, filteredItems.length));
-                      setIsLoading(false);
-                    }, 1000);
-                  }}
-                  disabled={isLoading}
-                  className="px-8 py-3 bg-gray-500 text-white rounded-none font-bold animate-pulse shadow-lg hover:shadow-xl hover:bg-gray-400 hover:scale-105 transition-all duration-200 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="animate-spin">⟳</span>
-                      Loading...
-                    </span>
-                  ) : (
-                    'Show More Designs'
-                  )}
-                </button>
+              <div ref={sentinelRef} className="text-center mt-12 py-8">
+                {isLoading ? (
+                  <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-700 rounded-full shadow-inner">
+                    <span className="animate-spin">⟳</span>
+                    Loading more designs...
+                  </div>
+                ) : (
+                  <div className="text-slate-500">Scroll down to load more designs</div>
+                )}
               </div>
             )}
 

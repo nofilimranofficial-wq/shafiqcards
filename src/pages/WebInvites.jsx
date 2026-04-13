@@ -1,8 +1,33 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { TEMPLATES } from '../data/webInviteTemplates';
+import InvitationLogin from '../components/InvitationLogin';
+import { getInvitationAuth } from '../utils/invitationAuth';
 
 const WebInvites = () => {
+  const [invitationAuth, setInvitationAuth] = useState(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setInvitationAuth(getInvitationAuth());
+  }, []);
+
+  const handleFloatingEditClick = () => {
+    if (invitationAuth?.slug) {
+      navigate(`/edit/${invitationAuth.slug}`);
+    } else {
+      setLoginModalOpen(true);
+    }
+  };
+
+  const handleLoginSuccess = (invitation) => {
+    setInvitationAuth(invitation);
+    setLoginModalOpen(false);
+    if (invitation?.slug) {
+      navigate(`/edit/${invitation.slug}`);
+    }
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans overflow-hidden">
@@ -13,7 +38,17 @@ const WebInvites = () => {
               <p className="text-sm font-semibold uppercase tracking-[0.32em] text-slate-500">Wedding invitation showcase</p>
               <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-950">Beautiful invitation designs for your wedding website.</h2>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-slate-600">Each invitation design uses clean white-gray tones and a premium gold finish for a polished presentation.</p>
+            <div className="flex flex-col gap-3 items-start md:items-end">
+              <p className="max-w-xl text-sm leading-6 text-slate-600">Each invitation design uses clean white-gray tones and a premium gold finish for a polished presentation.</p>
+              {invitationAuth && (
+                <Link
+                  to={`/edit/${invitationAuth.slug}`}
+                  className="inline-flex items-center justify-center rounded-full bg-[#c59d5f] px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-[#b8863f]"
+                >
+                  Edit Your Invitation
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,6 +110,32 @@ const WebInvites = () => {
           </div>
         </div>
       </section>
+
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="group relative">
+          <button
+            onClick={handleFloatingEditClick}
+            className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#c59d5f] text-white shadow-2xl transition hover:bg-[#b8863f]"
+            aria-label="Edit invitation"
+          >
+            <span className="material-symbols-outlined text-2xl">edit</span>
+          </button>
+          <div className="pointer-events-none absolute bottom-full right-0 mb-3 hidden w-72 rounded-2xl bg-white p-4 text-xs text-slate-800 shadow-xl ring-1 ring-slate-200 group-hover:block">
+            <p className="font-semibold text-slate-900">{invitationAuth ? 'Edit your web invite' : 'Login to edit your web invite'}</p>
+            <p className="mt-2 text-slate-600 leading-5">
+              {invitationAuth
+                ? 'Use this feature if you already have a created website invitation and want to update the details or design instantly.'
+                : 'Please login to your invitation account first. After signing in, this button will open your web invite edit page.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <InvitationLogin
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

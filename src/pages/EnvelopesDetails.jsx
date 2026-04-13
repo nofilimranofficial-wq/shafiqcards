@@ -1,62 +1,102 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { isAuthenticated, formatDescription } from '../utils/api';
-
-// Pricing data for envelopes
-const envelopePricing = {
-  basePrice: 200,
-  category: 'Elegant Envelopes'
-};
+import { formatDescription } from '../utils/api';
 
 const ImageGallery = ({ images = [], alt = '' }) => {
+  const cleanImages = Array.isArray(images) ? Array.from(new Set(images)) : [];
   const [mainIdx, setMainIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0.5, y: 0.5 });
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!images || images.length <= 1) return;
-    if (paused) return;
+    if (cleanImages.length <= 1 || paused) return;
     const id = setInterval(() => {
-      setMainIdx((p) => (p + 1) % images.length);
+      setMainIdx((prev) => (prev + 1) % cleanImages.length);
     }, 3000);
     return () => clearInterval(id);
-  }, [images, paused]);
+  }, [cleanImages, paused]);
 
   useEffect(() => {
     setMainIdx(0);
   }, [images]);
 
+  if (cleanImages.length === 0) {
+    return (
+      <div className="relative flex-1 rounded-3xl border border-dashed border-gray-300 bg-gray-50 aspect-[1/1] flex items-center justify-center text-sm text-gray-500">
+        No preview available
+      </div>
+    );
+  }
+
+  const currentImage = cleanImages[mainIdx];
+
+  const handleMouseMove = (event) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+    const y = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+    setCursorPosition({ x, y });
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      {/* Main image display (top on small, left on larger) */}
+    <div className="relative flex flex-col sm:flex-row gap-4">
       <div
-        className="flex-1 relative bg-gray-100 rounded-2xl overflow-hidden h-96"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
+        ref={containerRef}
+        className="relative flex-1 overflow-visible rounded-3xl bg-slate-100 aspect-[1/1] max-h-[600px]"
+        onMouseEnter={() => {
+          setPreviewVisible(true);
+          setPaused(true);
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => {
+          setPreviewVisible(false);
+          setPaused(false);
+        }}
       >
         <img
-          src={images[mainIdx]}
+          src={currentImage}
           alt={alt}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover bg-slate-100"
         />
-        {images.length > 1 && (
+
+        {cleanImages.length > 1 && (
           <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-            {mainIdx + 1} / {images.length}
+            {mainIdx + 1} / {cleanImages.length}
           </div>
         )}
+
+        <div
+          className={`hidden lg:block absolute top-1/2 -translate-y-1/2 right-[-460px] transition-all duration-300 ${
+            previewVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="w-[420px] h-[420px] rounded-[2rem] overflow-hidden bg-white shadow-2xl ring-1 ring-slate-200">
+            <div
+              className="w-full h-full bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${currentImage})`,
+                backgroundSize: '200%',
+                backgroundPosition: `${cursorPosition.x * 100}% ${cursorPosition.y * 100}%`
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Thumbnails */}
       <div className="flex sm:flex-col gap-3 w-full sm:w-20 overflow-x-auto sm:overflow-x-visible">
-        {images.length > 0 && images.map((img, i) => (
+        {cleanImages.map((img, i) => (
           <button
             key={i}
             onClick={() => setMainIdx(i)}
-            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+            className={`flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all ${
               mainIdx === i ? 'border-amber-600' : 'border-gray-300'
             }`}
           >
-            <img src={img} alt={`${alt} ${i}`} className="w-full h-full object-cover" />
+            <img src={img} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover bg-slate-100" />
           </button>
         ))}
       </div>
@@ -65,91 +105,102 @@ const ImageGallery = ({ images = [], alt = '' }) => {
 };
 
 const EnvelopesDetails = () => {
-  const { index } = useParams();
+  const { type, index } = useParams();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('id');
-  const [envelope, setEnvelope] = useState(null);
+  const [item, setItem] = useState(null);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
 
+  const productType = type === 'boxes' ? 'boxes' : 'envelopes';
+  const mappedCategory = productType === 'boxes' ? 'box' : 'envelope';
+  const codePrefix = productType === 'boxes' ? 'SFC-Box-' : 'SFC-ENV-';
+  const category = productType === 'boxes' ? 'Corporate Packaging' : 'Elegant Envelopes';
+  const title = productType === 'boxes' ? 'Corporate Box' : 'Envelope';
+  const backLink = productType === 'boxes' ? '/box-packaging' : '/envelopes';
+  const backText = productType === 'boxes' ? 'Back to boxes collection' : 'Back to envelopes collection';
+  const defaultDescription = productType === 'boxes'
+    ? 'Premium corporate packaging solution perfect for branded gifting and presentations.'
+    : 'Beautiful and elegant envelope design perfect for your special occasions.';
+  const basePrice = productType === 'boxes' ? 850 : 200;
 
   useEffect(() => {
-    const loadEnvelope = async () => {
+    const loadItem = async () => {
       setLoading(true);
       try {
+        let fetchedProduct = null;
+
         if (productId) {
           const res = await fetch(`${API_BASE_URL}/products/${productId}`);
           if (res.ok) {
             const data = await res.json();
-            const p = data.data.product;
-            setEnvelope({
-              index: Number(index) || 1,
-              paths: p.mediaUrls,
-              position: Number(index) || 1,
-            });
-            setDescription(p.description || 'Beautiful and elegant envelope design perfect for your special occasions.');
-            return;
+            fetchedProduct = data.data.product;
           }
         }
 
-        // Fallback filter
-        const res = await fetch(`${API_BASE_URL}/products/category/envelope`);
-        if (res.ok) {
-          const data = await res.json();
-          const products = data.data.products;
-          const idxNum = Number(index);
-          const p = products[idxNum - 1] || products[0];
-          if (p) {
-            setEnvelope({
-              index: idxNum,
-              paths: p.mediaUrls,
-              position: idxNum,
-            });
-            setDescription(p.description || 'Beautiful and elegant envelope design perfect for your special occasions.');
+        if (!fetchedProduct) {
+          const res = await fetch(`${API_BASE_URL}/products/category/${mappedCategory}`);
+          if (res.ok) {
+            const data = await res.json();
+            const products = data.data.products;
+            const idxNum = Number(index) || 1;
+            const p = products[idxNum - 1] || products[0];
+            if (p) {
+              fetchedProduct = p;
+            }
           }
         }
+
+        if (fetchedProduct) {
+          const idxNum = Number(index) || 1;
+          setItem({
+            index: idxNum,
+            paths: Array.isArray(fetchedProduct.mediaUrls) ? fetchedProduct.mediaUrls : [],
+            position: idxNum,
+            code: fetchedProduct.code
+          });
+          setDescription(fetchedProduct.description || defaultDescription);
+        }
       } catch (e) {
-        console.error('Failed to load envelope details', e);
+        console.error('Failed to load product details', e);
       } finally {
         setLoading(false);
       }
     };
-    loadEnvelope();
-  }, [index, productId]);
+    loadItem();
+  }, [index, productId, mappedCategory, defaultDescription]);
 
 
-  if (!envelope) {
+  if (!item) {
     return (
       <section className="py-12">
         <div className="max-w-4xl mx-auto text-center">
           {loading ? (
-            <p>Loading envelope details...</p>
+            <p>Loading product details...</p>
           ) : (
-            <p className="text-red-600">Envelope not found.</p>
+            <p className="text-red-600">Product not found.</p>
           )}
         </div>
       </section>
     );
   }
 
-  const code = `SFC-ENV-${2101 + envelope.position}`;
-  const price = envelopePricing.basePrice;
-  const category = envelopePricing.category;
-  const totalPrice = price * quantity;
+  const code = item.code || `${codePrefix}${productType === 'boxes' ? 1101 + item.position : 2101 + item.position}`;
+  const totalPrice = basePrice * quantity;
 
   const handleAddToCart = () => {
-    const item = {
+    const cartItem = {
       id: code,
-      name: `Envelope No: ${envelope.index}`,
-      price,
+      name: `${title} No: ${item.index}`,
+      price: basePrice,
       quantity,
-      image: envelope.paths[0],
-      type: 'envelopes'
+      image: item.paths[0],
+      type: productType
     };
-    setCart([...cart, item]);
-    alert(`Added ${quantity} envelope(s) to cart!`);
+    setCart((current) => [...current, cartItem]);
+    alert(`Added ${quantity} item(s) to cart!`);
     setQuantity(1);
   };
 
@@ -161,20 +212,20 @@ const EnvelopesDetails = () => {
   return (
     <section className="py-12 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-6xl mx-auto px-4">
-        <Link to="/envelopes" className="text-gray-600 hover:text-gray-700 underline mb-8 block text-sm font-semibold">
-          &larr; Back to envelopes collection
+        <Link to={backLink} className="text-gray-600 hover:text-gray-700 underline mb-8 block text-sm font-semibold">
+          &larr; {backText}
         </Link>
 
         <div className="bg-white p-10 rounded-3xl shadow-xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Left: Image Gallery */}
             <div>
-              <ImageGallery images={envelope.paths} alt={`Envelope ${envelope.index}`} />
+              <ImageGallery images={item.paths} alt={`${title} ${item.index}`} />
             </div>
 
             {/* Right: Details */}
             <div className="flex flex-col">
-              <h1 className="display-serif text-3xl font-bold mb-2">Envelope No: {envelope.index}</h1>
+              <h1 className="display-serif text-3xl font-bold mb-2">{title} No: {item.index}</h1>
               <p className="text-sm text-gray-500 mb-2">Product Code: {code}</p>
               <p className="inline-block bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit">
                 {category}

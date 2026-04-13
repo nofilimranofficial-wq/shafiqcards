@@ -17,6 +17,8 @@ const AdminLayout = () => {
 
   const navLinks = [
     { name: 'Dashboard', path: '/admin/dashboard' },
+    { name: 'Traffic', path: '/admin/traffic' },
+    { name: 'Admins', path: '/admin/admins' },
     { name: 'Product List', path: '/admin/products' },
     { name: 'Create Product', path: '/admin/create-product' }
   ];

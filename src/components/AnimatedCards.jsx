@@ -76,8 +76,8 @@ const AnimatedCards = ({ limit = 20, buttonText = "View All Designs", buttonLink
                   ref={(el) => (cardRefs.current[idx] = el)}
                   className="flex flex-col items-center gap-3 cursor-pointer group"
                 >
-                  <div className="overflow-hidden rounded-2xl w-full aspect-[3/4] bg-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <img src={src} alt={products[idx]?.title || `Design ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                  <div className="overflow-hidden rounded-2xl w-full aspect-[2/3] bg-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src={src} alt={products[idx]?.title || `Design ${idx + 1}`} className="w-full h-full object-cover bg-slate-100 transition-transform duration-500 group-hover:scale-105" loading="lazy" />
                   </div>
                   <div className="text-center">
                     <div className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">{products[idx]?.title || `Invitations Design ${idx + 1}`}</div>

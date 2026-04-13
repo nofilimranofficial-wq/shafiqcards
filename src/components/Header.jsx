@@ -37,6 +37,13 @@ const Header = () => {
     navigate('/');
   };
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/invitations?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+    }
+  };
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
@@ -89,30 +96,65 @@ const Header = () => {
           <div className="flex items-center gap-2 text-slate-600">
             <span className="material-symbols-outlined text-[18px]">Phone</span>
             <span>+92 349 2578726</span>
-            
           </div>
 
           <div className="text-center text-slate-500 px-20">Shafiq-Cards: Printing Beyond Expectations</div>
 
-          <div className="flex items-center gap-6 text-slate-600">
-            <a aria-label="Facebook" href="https://www.facebook.com/shafiqcards" className="hover:text-gray-600">Facebook</a>
-            <a aria-label="LinkedIn" href="https://www.instagram.com/shafiqcards/" className="hover:text-gray-600">Instagram</a>
+          <div className="flex items-center gap-4">
+            <div className="hidden xl:flex items-center gap-3 text-slate-600">
+              {invitationAuth ? (
+                <>
+                  <span className="text-xs text-slate-600">Logged in</span>
+                  <Link
+                    to={`/edit/${invitationAuth.slug}`}
+                    className="px-3 py-1 rounded-full bg-[#c59d5f]/10 text-[#7c5a27] text-xs font-semibold hover:bg-[#c59d5f]/20 transition"
+                  >
+                    Edit Invitation
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1 rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-100 transition"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setLoginModal(true)}
+                  className="px-3 py-1 rounded-full bg-[#c59d5f] text-white text-xs font-semibold hover:bg-[#b8863f] transition"
+                >
+                  Login to Edit
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-6 text-slate-600">
+              <a aria-label="Facebook" href="https://www.facebook.com/shafiqcards" className="hover:text-gray-600">Facebook</a>
+              <a aria-label="Instagram" href="https://www.instagram.com/shafiqcards/" className="hover:text-gray-600">Instagram</a>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main header: centered logo with actions on the right (desktop) */}
+      {/* Main header: logo on the left and brand text centered with accent colors */}
       <div className={`border-b border-slate-100 transform transition-transform duration-300 ease-in-out ${compact ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="max-w-7xl mx-auto px-6 h-28 flex items-center justify-between">
-          <div className="flex-1 flex items-center">
-            {/* left placeholder for symmetry on desktop */}
-          </div>
-
-          <Link to="/" className="flex-shrink-0 flex items-center justify-center">
-            <img src={logo} alt="Shafiq Cards Logo" className="h-20 object-contain" />
+        <div className="max-w-7xl mx-auto px-6 py-4 md:py-0 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+          <Link to="/" className="flex items-center gap-3 flex-shrink-0">
+            <img src={logo} alt="Shafiq Cards Logo" className="h-24 object-contain" />
           </Link>
 
-          <div className="flex-1 flex items-center justify-end gap-4">
+          <div className="flex-1 w-full md:w-auto flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-serif font-medium tracking-tight text-[#c59d5f]">
+                Shafiq Cards.com
+              </div>
+              <p className="text-sm md:text-base text-slate-500 mt-1">
+                Elegant invitations, premium packaging, and stunning digital reels.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 justify-end w-full md:w-auto">
             {searchOpen && (
               <input
                 type="text"
@@ -120,45 +162,16 @@ const Header = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search collection..."
-                className="hidden md:block px-4 py-2 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="hidden md:block w-full max-w-xs px-4 py-2 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
                 autoFocus
               />
             )}
             <button
-              onClick={() => setSearchOpen(!searchOpen)}
+              onClick={() => setSearchOpen((prev) => !prev)}
               className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200"
             >
               <span className="material-symbols-outlined">{searchOpen ? 'close' : 'search'}</span>
             </button>
-
-            {/* Invitation Login/Logout */}
-            {invitationAuth ? (
-              <div className="hidden md:flex items-center gap-3">
-                <span className="text-sm text-slate-600">
-                  Welcome, {invitationAuth.brideName} & {invitationAuth.groomName}
-                </span>
-                <Link
-                  to={`/edit/${invitationAuth.slug}`}
-                  className="px-4 py-2 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition text-sm"
-                >
-                  Edit Invitation
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setLoginModal(true)}
-                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition text-sm"
-              >
-                <span className="material-symbols-outlined text-sm">login</span>
-                Login to Edit
-              </button>
-            )}
 
             <button
               aria-expanded={open}

@@ -1,9 +1,10 @@
 import { formatDescription } from '../utils/api';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSearchParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import useGsap from '../hooks/useGsap';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 import { fetchProductsByCategory } from '../config';
 
 const CorporateBoxes = () => {
@@ -49,6 +50,30 @@ const CorporateBoxes = () => {
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
   const [loaded, setLoaded] = useState(false);
+
+  const loadMoreItems = useCallback(() => {
+    if (isLoading || visibleCount >= filteredItems.length) return;
+    setIsLoading(true);
+    window.setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + 15, filteredItems.length));
+      setIsLoading(false);
+    }, 650);
+  }, [filteredItems.length, isLoading, visibleCount]);
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: !initialLoad && filteredItems.length > 0,
+    onLoadMore: loadMoreItems,
+    hasMore: visibleCount < filteredItems.length,
+    isLoading,
+    rootMargin: '400px',
+    threshold: 0.1,
+  });
+
+  useEffect(() => {
+    if (visibleCount > filteredItems.length) {
+      setVisibleCount(filteredItems.length);
+    }
+  }, [filteredItems.length, visibleCount]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -134,27 +159,15 @@ const CorporateBoxes = () => {
             </div>
 
             {visibleCount < filteredItems.length && (
-              <div className="text-center mt-16">
-                <button
-                  onClick={() => {
-                    setIsLoading(true);
-                    setTimeout(() => {
-                      setVisibleCount(prev => Math.min(prev + 15, filteredItems.length));
-                      setIsLoading(false);
-                    }, 1200);
-                  }}
-                  disabled={isLoading}
-                  className="px-10 py-4 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-full font-bold shadow-xl hover:shadow-2xl hover:from-slate-700 hover:to-slate-800 transform hover:scale-105 transition-all duration-300 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-3">
-                      <span className="animate-spin text-xl">⟳</span>
-                      Loading Designs...
-                    </span>
-                  ) : (
-                    'Explore More Boxes'
-                  )}
-                </button>
+              <div ref={sentinelRef} className="text-center mt-16 py-8">
+                {isLoading ? (
+                  <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-700 rounded-full shadow-inner">
+                    <span className="animate-spin">⟳</span>
+                    Loading more boxes...
+                  </div>
+                ) : (
+                  <div className="text-slate-500">Scroll down to load more boxes</div>
+                )}
               </div>
             )}
 

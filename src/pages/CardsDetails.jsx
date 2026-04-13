@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import details from '../data/Detail.json';
 import { API_BASE_URL } from '../config';
-import { isAuthenticated, formatDescription } from '../utils/api';
+import { formatDescription } from '../utils/api';
 
-// Pricing data for all product types
 const pricingData = {
   invitations: {
     1: { price: 450, category: 'Wedding Invitations' },
@@ -27,50 +26,97 @@ const ImageGallery = ({ images = [], alt = '' }) => {
   const cleanImages = Array.isArray(images) ? Array.from(new Set(images)) : [];
   const [mainIdx, setMainIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0.5, y: 0.5 });
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!cleanImages || cleanImages.length <= 1) return;
     if (paused) return;
     const id = setInterval(() => {
-      setMainIdx((p) => (p + 1) % cleanImages.length);
+      setMainIdx((prev) => (prev + 1) % cleanImages.length);
     }, 3000);
     return () => clearInterval(id);
   }, [cleanImages, paused]);
+
   useEffect(() => {
     setMainIdx(0);
   }, [images]);
 
+  if (cleanImages.length === 0) {
+    return (
+      <div className="relative flex-1 rounded-3xl border border-dashed border-gray-300 bg-gray-50 aspect-[3/4] flex items-center justify-center text-sm text-gray-500">
+        No preview available
+      </div>
+    );
+  }
+
+  const currentImage = cleanImages[mainIdx];
+
+  const handleMouseMove = (event) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+    const y = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+    setCursorPosition({ x, y });
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      {/* Main image display (top on small, left on larger) */}
+    <div className="relative flex flex-col sm:flex-row gap-4">
       <div
-        className="flex-1 relative bg-gray-100 rounded-2xl overflow-hidden h-96"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
+        ref={containerRef}
+        className="relative flex-1 overflow-visible rounded-3xl bg-slate-100 aspect-[3/4] max-h-[720px]"
+        onMouseEnter={() => {
+          setPreviewVisible(true);
+          setPaused(true);
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => {
+          setPreviewVisible(false);
+          setPaused(false);
+        }}
       >
         <img
-          src={images[mainIdx]}
+          src={currentImage}
           alt={alt}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover bg-slate-100"
         />
-        {images.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-            {mainIdx + 1} / {images.length}
+
+        {cleanImages.length > 1 && (
+          <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+            {mainIdx + 1} / {cleanImages.length}
           </div>
         )}
+
+        <div
+          className={`hidden lg:block absolute top-1/2 -translate-y-1/2 right-[-460px] transition-all duration-300 ${
+            previewVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="w-[360px] max-w-[42vw] rounded-[2rem] overflow-hidden bg-white shadow-2xl ring-1 ring-slate-200">
+            <div
+              className="w-full h-[480px] bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${currentImage})`,
+                backgroundSize: '200%',
+                backgroundPosition: `${cursorPosition.x * 100}% ${cursorPosition.y * 100}%`
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Thumbnails */}
       <div className="flex sm:flex-col gap-3 w-full sm:w-20 overflow-x-auto sm:overflow-x-visible">
-        {images.length > 0 && images.map((img, i) => (
+        {cleanImages.map((img, i) => (
           <button
             key={i}
             onClick={() => setMainIdx(i)}
-            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+            className={`flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all ${
               mainIdx === i ? 'border-amber-600' : 'border-gray-300'
             }`}
           >
-            <img src={img} alt={`${alt} ${i}`} className="w-full h-full object-cover" />
+            <img src={img} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover bg-slate-100" />
           </button>
         ))}
       </div>
@@ -78,13 +124,16 @@ const ImageGallery = ({ images = [], alt = '' }) => {
   );
 };
 
+const extractCardNumber = (description = '') => {
+  const match = description.match(/Card Number:\s*([^\n]+)/i);
+  return match?.[1]?.trim();
+};
+
 const ProductDetails = () => {
-  const { index, type } = useParams();
+  const { index } = useParams();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('id');
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [productType, setProductType] = useState(type || 'invitations');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -95,44 +144,34 @@ const ProductDetails = () => {
     const loadProduct = async () => {
       setLoading(true);
       try {
+        let fetchedProduct = null;
+        let fallbackDescription = '';
+
         if (productId) {
           const res = await fetch(`${API_BASE_URL}/products/${productId}`);
           if (res.ok) {
             const data = await res.json();
-            const p = data.data.product;
-            setProduct({
-              index: Number(index) || 1,
-              paths: p.mediaUrls,
-              position: Number(index) || 1,
-              type: productType
-            });
-            setDescription(p.description || (details.length ? details[(Number(index) || 1) % details.length] : ''));
-            return;
+            fetchedProduct = data.data.product;
           }
         }
-        
-        // Fallback: fetch matching category
-        let mappedCategory = 'invitation';
-        if (productType === 'envelopes') mappedCategory = 'envelope';
-        if (productType === 'boxes') mappedCategory = 'box';
 
-        const res = await fetch(`${API_BASE_URL}/products/category/${mappedCategory}`);
-        if (res.ok) {
-           const data = await res.json();
-           const products = data.data.products;
-           // We expect product passed by numeric index to be found by array position roughly
-           // since titles are parsed and uploaded sequentially.
-           const idxNum = Number(index);
-           const p = products[idxNum - 1] || products[0];
-           if (p) {
-             setProduct({
-               index: idxNum,
-               paths: p.mediaUrls,
-               position: idxNum,
-               type: productType
-             });
-             setDescription(p.description || 'Premium Shafiq Cards Product.');
-           }
+        if (!fetchedProduct) {
+          const res = await fetch(`${API_BASE_URL}/products/category/invitation`);
+          if (res.ok) {
+            const data = await res.json();
+            const products = data.data.products || [];
+            const idx = Number(index) || 1;
+            const selected = products[idx - 1] || products[0];
+            if (selected) {
+              fetchedProduct = selected;
+              fallbackDescription = selected.description || details[(idx - 1) % details.length] || 'Premium Shafiq Cards Product.';
+            }
+          }
+        }
+
+        if (fetchedProduct) {
+          setProduct(fetchedProduct);
+          setDescription(fetchedProduct.description || fallbackDescription || 'Premium Shafiq Cards Product.');
         }
       } catch (e) {
         console.error('Failed to load product details', e);
@@ -141,7 +180,7 @@ const ProductDetails = () => {
       }
     };
     loadProduct();
-  }, [index, productType, type, productId]);
+  }, [index, productId]);
 
   if (!product) {
     return (
@@ -157,52 +196,48 @@ const ProductDetails = () => {
     );
   }
 
-  // Generate product code based on type
-  let code;
-  if (productType === 'invitations') {
-    code = `SFC-${1101 + product.position}`;
-  } else if (productType === 'envelopes') {
-    code = `SFC-${2101 + product.position}`;
-  } else if (productType === 'boxes') {
-    code = `SFC-Box-${1101 + product.position}`;
+  const position = Number(product.position || index || 1);
+  const fallbackCode = `SFC-${1101 + position}`;
+  const code = product.code || fallbackCode;
+
+  const parsedCardNumber = extractCardNumber(description) || code;
+  const productPrice = product?.price ? String(product.price).trim() : '';
+  let priceValue = null;
+  let categoryLabel = 'Shafiq Cards';
+
+  if (productPrice) {
+    const normalizedPrice = productPrice.replace(/[^\d.]/g, '');
+    if (normalizedPrice && !Number.isNaN(Number(normalizedPrice))) {
+      priceValue = Number(normalizedPrice);
+    }
   }
 
-  // Get pricing
-  let price, category;
-  if (productType === 'invitations') {
-    const pricing = pricingData.invitations[product.index] || { price: 500, category: 'Cards' };
-    price = pricing.price;
-    category = pricing.category;
-  } else if (productType === 'envelopes') {
-    price = pricingData.envelopes.basePrice;
-    category = pricingData.envelopes.category;
-  } else if (productType === 'boxes') {
-    price = pricingData.boxes.basePrice;
-    category = pricingData.boxes.category;
+  if (!priceValue) {
+    const pricing = pricingData.invitations[position] || { price: 500, category: 'Wedding Invitations' };
+    priceValue = pricing.price;
+    categoryLabel = pricing.category;
+  } else {
+    categoryLabel = pricingData.invitations[position]?.category || categoryLabel;
   }
 
-  const totalPrice = price * quantity;
+  const totalPrice = priceValue ? priceValue * quantity : null;
 
-  // Determine back link
-  const backLink = productType === 'envelopes' ? '/envelopes' : 
-                   productType === 'boxes' ? '/box-packaging' : '/invitations';
-  const backText = productType === 'envelopes' ? 'Back to envelopes' : 
-                   productType === 'boxes' ? 'Back to boxes' : 'Back to invitations';
+  const backLink = '/invitations';
+  const backText = 'Back to invitations';
 
   const handleAddToCart = () => {
     const item = {
       id: code,
-      name: `${productType.charAt(0).toUpperCase() + productType.slice(1)} No: ${product.index}`,
-      price,
+      name: `Invitation No: ${position}`,
+      price: priceValue,
       quantity,
-      image: product.paths[0],
-      type: productType
+      image: Array.isArray(product.mediaUrls) ? product.mediaUrls[0] : '',
+      type: 'invitations'
     };
-    setCart([...cart, item]);
+    setCart((current) => [...current, item]);
     alert(`Added ${quantity} item(s) to cart!`);
     setQuantity(1);
   };
-
   const handleQuantityChange = (e) => {
     const val = Math.max(1, Math.min(999, Number(e.target.value) || 1));
     setQuantity(val);
@@ -219,29 +254,34 @@ const ProductDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Left: Image Gallery */}
             <div>
-              <ImageGallery images={product.paths} alt={`${productType} ${product.index}`} />
+              <ImageGallery images={Array.isArray(product.mediaUrls) ? product.mediaUrls : []} alt={`Invitation ${product.index}`} />
             </div>
 
             {/* Right: Details */}
             <div className="flex flex-col">
               <h1 className="display-serif text-3xl font-bold mb-2">
-                {productType.charAt(0).toUpperCase() + productType.slice(1)} No: {product.index}
+                Invitation No: {product.index}
               </h1>
               <p className="text-sm text-gray-500 mb-2">Product Code: {code}</p>
               <p className="inline-block bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit">
-                {category}
+                {categoryLabel}
               </p>
 
-             
-
-              {/* Description */}
-              <p className="text-gray-700 mb-8 leading-relaxed">
-                {formatDescription(description)}
-              </p>
-
-            
-
-              
+              <div className="space-y-4 mb-8">
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {formatDescription(description)}
+                </div>
+                <div className="grid gap-2 text-sm text-gray-600">
+                  <p>
+                    <span className="font-semibold text-gray-900">Card Number:</span>{' '}
+                    {parsedCardNumber}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-gray-900">Price:</span>{' '}
+                    {priceValue ? `PKR ${priceValue}` : 'N/A'}
+                  </p>
+                </div>
+              </div>
 
               {/* Social Sharing */}
               <div className="border-t border-gray-200 pt-6">
