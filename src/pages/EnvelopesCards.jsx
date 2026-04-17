@@ -55,17 +55,16 @@ const EnvelopesCards = () => {
   useEffect(() => {
     const loadImages = async () => {
       setLoading(true);
+      setVisibleCount(20);
       try {
-        const { products } = await fetchProductsByCategory('envelope');
+        const { products } = await fetchProductsByCategory('envelope', 1, 100, search);
 
         setImages(
-          products.map((p, idx) => {
-            return {
-              index: idx + 1,
-              id: p._id,
-              paths: p.mediaUrls.slice(0, 3)
-            };
-          })
+          products.map((p, idx) => ({
+            index: idx + 1,
+            id: p._id,
+            paths: p.mediaUrls.slice(0, 3),
+          }))
         );
       } catch (e) {
         console.error('Failed to load envelopes list', e);
@@ -74,7 +73,7 @@ const EnvelopesCards = () => {
       }
     };
     loadImages();
-  }, []);
+  }, [search]);
   
   // images now is an array of groups: { index, paths: [...] }
   const filteredItems = images.map((group, idx) => ({
@@ -85,37 +84,7 @@ const EnvelopesCards = () => {
     code: `SFC-${2101 + idx}`,
     name: `Envelope ${idx + 1}`,
     description: ''
-  })).filter((item) => {
-    let s = search.toLowerCase().trim();
-    if (!s) return true; // no search => keep all
-
-    // normalize some common word forms
-    if (s.includes('elegance')) {
-      s = s.replace('elegance', 'elegant');
-    }
-
-    // break search into terms and ignore common stopwords
-    const stop = new Set(['i','want','a','an','the','like','looking','please','for','with','and']);
-    const terms = s.split(/\s+/).filter((t) => t && !stop.has(t));
-    if (terms.length) {
-      const hay = (
-        item.code + ' ' + item.name + ' ' + item.description
-      ).toLowerCase();
-      // if any term is found, keep the item
-      const anyMatch = terms.some((t) => hay.includes(t));
-      if (anyMatch) return true;
-    }
-
-    // if search contains a number, check index
-    const m = s.match(/\d+/);
-    if (m) {
-      const num = parseInt(m[0], 10);
-      if (num === item.index || num === idx + 1) {
-        return true;
-      }
-    }
-    return false;
-  });
+  }));
   
   const containerRef = useRef(null);
   const cardRefs = useRef([]);

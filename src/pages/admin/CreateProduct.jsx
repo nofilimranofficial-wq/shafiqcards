@@ -12,7 +12,8 @@ const CreateProduct = () => {
     title: '',
     category: 'invitation',
     description: '',
-    price: '',
+    adminNote: '',
+    keywords: '',
     cardNumber: '',
     isActive: true,
   });
@@ -29,6 +30,16 @@ const CreateProduct = () => {
     setFiles(e.target.files);
   };
 
+  const handleKeywordKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      const rawValue = formData.keywords || '';
+      const normalized = rawValue.replace(/\s*,\s*$/, '').trim();
+      if (!normalized) return;
+      setFormData((prev) => ({ ...prev, keywords: `${normalized}, ` }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -39,19 +50,30 @@ const CreateProduct = () => {
       return;
     }
 
+    const parsedKeywords = formData.keywords
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean);
+
+    if (parsedKeywords.length < 2 || parsedKeywords.length > 10) {
+      setError('Please add between 2 and 10 keywords separated by commas.');
+      return;
+    }
+
     setLoading(true);
     
     // Build multipart/form-data
     const submitData = new FormData();
     submitData.append('title', formData.title || '');
     submitData.append('category', formData.category);
-    submitData.append('price', formData.price || '');
+    submitData.append('adminNote', formData.adminNote || '');
 
     let descriptionText = formData.description || '';
     if (formData.cardNumber) {
       descriptionText = `${descriptionText}${descriptionText ? '\n\n' : ''}Card Number: ${formData.cardNumber}`;
     }
     submitData.append('description', descriptionText);
+    submitData.append('keywords', formData.keywords || '');
 
     for (let i = 0; i < files.length; i++) {
       submitData.append('media', files[i]);
@@ -64,7 +86,8 @@ const CreateProduct = () => {
         title: '',
         category: 'invitation',
         description: '',
-        price: '',
+        adminNote: '',
+        keywords: '',
         cardNumber: '',
         isActive: true,
       });
@@ -122,12 +145,29 @@ const CreateProduct = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Price (PKR)</label>
-            <input 
-               type="number" name="price" value={formData.price} onChange={handleChange}
-               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 placeholder-slate-400 shadow-sm"
-               placeholder="450"
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Admin Notes</label>
+            <textarea
+              name="adminNote"
+              value={formData.adminNote}
+              onChange={handleChange}
+              rows="4"
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 placeholder-slate-400 shadow-sm resize-none"
+              placeholder="Write internal notes for other admins. This will not show to customers."
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Keywords</label>
+            <input
+              type="text"
+              name="keywords"
+              value={formData.keywords}
+              onChange={handleChange}
+              onKeyDown={handleKeywordKeyDown}
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all duration-300 placeholder-slate-400 shadow-sm"
+              placeholder="e.g. floral, gold foil, luxury"
+            />
+            <p className="text-xs text-slate-500">Type a keyword and press <span className="font-semibold">Ctrl+Enter</span> to confirm it, then add the next one. Use 2–10 keywords separated by commas.</p>
           </div>
 
           <div className="space-y-2">

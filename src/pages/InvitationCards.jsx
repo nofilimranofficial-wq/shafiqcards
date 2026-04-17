@@ -62,18 +62,17 @@ const InvitationCards = () => {
   useEffect(() => {
     const loadImages = async () => {
       setLoading(true);
+      setVisibleCount(20);
       try {
-        const { products } = await fetchProductsByCategory('invitation');
+        const { products } = await fetchProductsByCategory('invitation', 1, 100, search);
 
         setImages(
-          products.map((p, idx) => {
-            return {
-              index: idx + 1,
-              id: p._id,
-              paths: p.mediaUrls.slice(0, 3), // cap displayed copies to 3
-              title: p.title
-            };
-          })
+          products.map((p, idx) => ({
+            index: idx + 1,
+            id: p._id,
+            paths: p.mediaUrls.slice(0, 3), // cap displayed copies to 3
+            title: p.title,
+          }))
         );
       } catch (e) {
         console.error('Failed to load invitation list', e);
@@ -82,7 +81,7 @@ const InvitationCards = () => {
       }
     };
     loadImages();
-  }, []);
+  }, [search]);
   
   // images now is an array of groups: { index, paths: [...] }
   const filteredItems = images.map((group, idx) => ({
@@ -93,37 +92,7 @@ const InvitationCards = () => {
     code: `SFC-${1101 + idx}`,
     name: group.title || `Design ${idx + 1}`,
     description: details.length ? details[idx % details.length] : ''
-  })).filter((item) => {
-    let s = search.toLowerCase().trim();
-    if (!s) return true; // no search => keep all
-
-    // normalize some common word forms
-    if (s.includes('elegance')) {
-      s = s.replace('elegance', 'elegant');
-    }
-
-    // break search into terms and ignore common stopwords
-    const stop = new Set(['i','want','a','an','the','like','looking','please','for','with','and']);
-    const terms = s.split(/\s+/).filter((t) => t && !stop.has(t));
-    if (terms.length) {
-      const hay = (
-        item.code + ' ' + item.name + ' ' + item.description
-      ).toLowerCase();
-      // if any term is found, keep the item
-      const anyMatch = terms.some((t) => hay.includes(t));
-      if (anyMatch) return true;
-    }
-
-    // if search contains a number, check index
-    const m = s.match(/\d+/);
-    if (m) {
-      const num = parseInt(m[0], 10);
-      if (num === item.index || num === idx + 1) {
-        return true;
-      }
-    }
-    return false;
-  });
+  }));
   
   const containerRef = useRef(null);
   const cardRefs = useRef([]);

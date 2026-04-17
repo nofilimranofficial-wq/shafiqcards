@@ -18,10 +18,11 @@ const Footer = () => {
           <div>
             <h6 className="font-bold mb-4 text-sm uppercase tracking-widest">Collections</h6>
             <ul className="space-y-3 text-sm text-slate-600">
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Wedding Invitations</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Box Packaging</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Stationery Sets</a></li>
-              <li><a className="hover:text-amber-600 transition-colors" href="#">Acrylic Invites</a></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/invitations">Invitation Cards</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/envelopes">Envelope Collection</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/box-packaging">Box Packaging</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/digital-invites">Digital Invites</Link></li>
+              <li><Link className="hover:text-amber-600 transition-colors" to="/web-invites">Web Invitation Templates</Link></li>
             </ul>
           </div>
           <div>

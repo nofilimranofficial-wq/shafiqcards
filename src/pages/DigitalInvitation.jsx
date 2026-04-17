@@ -20,8 +20,9 @@ const DigitalInvitation = () => {
   useEffect(() => {
     const loadReels = async () => {
       setIsLoading(true);
+      setVisibleReels(8);
       try {
-        const { products } = await fetchProductsByCategory('reel');
+        const { products } = await fetchProductsByCategory('reel', 1, 100, search);
         setReels(
           products.map((p, idx) => ({
             reel: p.mediaUrls[0] || '',
@@ -36,15 +37,13 @@ const DigitalInvitation = () => {
       }
     };
     loadReels();
-  }, []);
+  }, [search]);
 
   const filteredReels = reels.map((r, index) => ({ 
     ...r,
     originalIdx: index,
     code: `SFC-Reel-${1101 + index}`,
-  })).filter((item) => {
-    return item.code.toLowerCase().includes(search.toLowerCase()) || item.name.toLowerCase().includes(search.toLowerCase());
-  });
+  }));
   
   useEffect(() => {
     if (isLoading || filteredReels.length === 0) return;

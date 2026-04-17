@@ -148,8 +148,8 @@ const ProductList = () => {
                       </div>
                       <div>
                         <div className="font-semibold text-slate-900 text-sm group-hover:text-amber-600 transition-colors line-clamp-1">{product.title}</div>
-                        <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
-                           {product.description?.match(/Price:\s*(\d+)/)?.[1] ? `PKR ${product.description.match(/Price:\s*(\d+)/)[1]}` : 'Price N/A'}
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 line-clamp-1">
+                           {product.adminNote ? product.adminNote : 'No internal admin notes.'}
                         </div>
                       </div>
                     </div>

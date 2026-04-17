@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { formatDescription } from '../utils/api';
+import { formatDescription, isAuthenticated, getToken } from '../utils/api';
 
 const ReelDetails = () => {
   const { id } = useParams();
@@ -21,7 +21,13 @@ const ReelDetails = () => {
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/products/${id}`);
+        const authQuery = isAuthenticated() ? '?admin=true' : '';
+        const authHeaders = isAuthenticated()
+          ? { Authorization: `Bearer ${getToken()}` }
+          : {};
+        const res = await fetch(`${API_BASE_URL}/products/${id}${authQuery}`, {
+          headers: authHeaders,
+        });
         if (!res.ok) {
           throw new Error('Unable to load reel details.');
         }
@@ -68,7 +74,6 @@ const ReelDetails = () => {
   const primaryMedia = Array.isArray(product.mediaUrls) && product.mediaUrls.length > 0 ? product.mediaUrls[0] : null;
   const isVideo = primaryMedia && typeof primaryMedia === 'string' && primaryMedia.match(/\.(mp4|mov|webm|ogg)$/i);
   const productCode = product.code || `SFC-Reel-${product.position || '000'}`;
-  const price = product.price ? product.price : 'Contact us for pricing';
   const category = product.category || 'Reel Invitations';
 
   return (
@@ -81,7 +86,7 @@ const ReelDetails = () => {
         <div className="bg-white p-10 rounded-3xl shadow-xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
-              <div className="rounded-[2rem] overflow-hidden bg-slate-900 shadow-lg h-[660px] w-[300px] lg:w-full">
+              <div className="rounded-[2rem] overflow-hidden bg-slate-900 shadow-lg h-[420px] w-[300px] lg:w-full">
                 {primaryMedia ? (
                   isVideo ? (
                     <video
@@ -119,11 +124,14 @@ const ReelDetails = () => {
                   {formatDescription(description)}
                 </div>
 
+                {isAuthenticated() && product?.adminNote && (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <h2 className="text-sm font-semibold text-slate-900 mb-2">Admin Notes</h2>
+                    <p className="text-sm text-slate-700 whitespace-pre-line">{product.adminNote}</p>
+                  </div>
+                )}
+
                 <div className="grid gap-2 text-sm text-gray-600">
-                  <p>
-                    <span className="font-semibold text-gray-900">Price:</span>{' '}
-                    {typeof price === 'number' ? `PKR ${price}` : price}
-                  </p>
                   <p>
                     <span className="font-semibold text-gray-900">Media count:</span>{' '}
                     {Array.isArray(product.mediaUrls) ? product.mediaUrls.length : 0}

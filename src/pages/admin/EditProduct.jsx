@@ -25,7 +25,8 @@ const EditProduct = () => {
   const [formData, setFormData] = useState({
     title: "",
     category: "invitation",
-    price: "",
+    adminNote: "",
+    keywords: "",
     cardNumber: "",
     description: "",
     isActive: true
@@ -44,7 +45,8 @@ const EditProduct = () => {
         setFormData({
           title: product.title || '',
           category: product.category || 'invitation',
-          price: product.price || '',
+          adminNote: product.adminNote || '',
+          keywords: Array.isArray(product.keywords) ? product.keywords.join(', ') : (product.keywords || ''),
           cardNumber,
           description: sanitizedDescription,
           isActive: product.isActive !== false
@@ -68,6 +70,16 @@ const EditProduct = () => {
     setNewFiles(e.target.files);
   };
 
+  const handleKeywordKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      const rawValue = formData.keywords || '';
+      const normalized = rawValue.replace(/\s*,\s*$/, '').trim();
+      if (!normalized) return;
+      setFormData((prev) => ({ ...prev, keywords: `${normalized}, ` }));
+    }
+  };
+
   const removeExistingMedia = (index) => {
     const mediaToRemove = existingMedia[index];
     setExistingMedia(existingMedia.filter((_, i) => i !== index));
@@ -76,6 +88,16 @@ const EditProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const parsedKeywords = formData.keywords
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean);
+
+    if (parsedKeywords.length < 2 || parsedKeywords.length > 10) {
+      setError('Please add between 2 and 10 keywords separated by commas.');
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
@@ -83,7 +105,7 @@ const EditProduct = () => {
       const submitData = new FormData();
       submitData.append("title", formData.title || '');
       submitData.append("category", formData.category);
-      submitData.append("price", formData.price || '');
+      submitData.append("adminNote", formData.adminNote || '');
       submitData.append("isActive", formData.isActive);
 
       let descriptionText = stripMetadataFromDescription(formData.description || '');
@@ -91,6 +113,7 @@ const EditProduct = () => {
         descriptionText = `${descriptionText}${descriptionText ? '\n\n' : ''}Card Number: ${formData.cardNumber}`;
       }
       submitData.append("description", descriptionText);
+      submitData.append("keywords", formData.keywords || '');
       submitData.append("mediaUrls", JSON.stringify(existingMedia));
 
       if (newFiles.length > 0) {
@@ -160,11 +183,27 @@ const EditProduct = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Price (PKR)</label>
-            <input 
-               type="number" name="price" value={formData.price} onChange={handleChange}
-               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm"
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Admin Notes</label>
+            <textarea
+               name="adminNote" value={formData.adminNote} onChange={handleChange}
+               rows="4"
+               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm resize-none"
+               placeholder="Write internal notes for other admins. This will not show to customers."
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Product Keywords</label>
+            <input
+              type="text"
+              name="keywords"
+              value={formData.keywords}
+              onChange={handleChange}
+              onKeyDown={handleKeywordKeyDown}
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl focus:outline-none transition-all text-sm"
+              placeholder="e.g. floral, gold foil, luxury"
+            />
+            <p className="text-xs text-slate-500">Type a keyword and press <span className="font-semibold">Ctrl+Enter</span> to mark it, then continue typing the next one. Use 2–10 keywords separated by commas.</p>
           </div>
 
           <div className="space-y-2">

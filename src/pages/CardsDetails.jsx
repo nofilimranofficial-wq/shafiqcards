@@ -2,25 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import details from '../data/Detail.json';
 import { API_BASE_URL } from '../config';
-import { formatDescription } from '../utils/api';
+import { formatDescription, isAuthenticated, getToken } from '../utils/api';
 
-const pricingData = {
-  invitations: {
-    1: { price: 450, category: 'Wedding Invitations' },
-    2: { price: 500, category: 'Wedding Invitations' },
-    3: { price: 480, category: 'Wedding Invitations' },
-    4: { price: 520, category: 'Wedding Invitations' },
-    5: { price: 550, category: 'Premium Cards' },
-  },
-  envelopes: {
-    basePrice: 200,
-    category: 'Elegant Envelopes'
-  },
-  boxes: {
-    basePrice: 850,
-    category: 'Corporate Packaging'
-  }
-};
 
 const ImageGallery = ({ images = [], alt = '' }) => {
   const cleanImages = Array.isArray(images) ? Array.from(new Set(images)) : [];
@@ -144,11 +127,18 @@ const ProductDetails = () => {
     const loadProduct = async () => {
       setLoading(true);
       try {
+        const authQuery = isAuthenticated() ? '?admin=true' : '';
         let fetchedProduct = null;
         let fallbackDescription = '';
 
+        const authHeaders = isAuthenticated()
+          ? { Authorization: `Bearer ${getToken()}` }
+          : {};
+
         if (productId) {
-          const res = await fetch(`${API_BASE_URL}/products/${productId}`);
+          const res = await fetch(`${API_BASE_URL}/products/${productId}${authQuery}`, {
+            headers: authHeaders,
+          });
           if (res.ok) {
             const data = await res.json();
             fetchedProduct = data.data.product;
@@ -156,7 +146,9 @@ const ProductDetails = () => {
         }
 
         if (!fetchedProduct) {
-          const res = await fetch(`${API_BASE_URL}/products/category/invitation`);
+          const res = await fetch(`${API_BASE_URL}/products/category/invitation${authQuery}`, {
+            headers: authHeaders,
+          });
           if (res.ok) {
             const data = await res.json();
             const products = data.data.products || [];
@@ -201,26 +193,12 @@ const ProductDetails = () => {
   const code = product.code || fallbackCode;
 
   const parsedCardNumber = extractCardNumber(description) || code;
+  const cleanDescription = description.replace(/Card Number:\s*[^\n\r]+[\n\r]*/i, '').trim();
   const productPrice = product?.price ? String(product.price).trim() : '';
-  let priceValue = null;
-  let categoryLabel = 'Shafiq Cards';
-
-  if (productPrice) {
-    const normalizedPrice = productPrice.replace(/[^\d.]/g, '');
-    if (normalizedPrice && !Number.isNaN(Number(normalizedPrice))) {
-      priceValue = Number(normalizedPrice);
-    }
-  }
-
-  if (!priceValue) {
-    const pricing = pricingData.invitations[position] || { price: 500, category: 'Wedding Invitations' };
-    priceValue = pricing.price;
-    categoryLabel = pricing.category;
-  } else {
-    categoryLabel = pricingData.invitations[position]?.category || categoryLabel;
-  }
-
-  const totalPrice = priceValue ? priceValue * quantity : null;
+  const normalizedPrice = productPrice ? productPrice.replace(/[^\d.]/g, '') : '';
+  const priceValue = normalizedPrice && !Number.isNaN(Number(normalizedPrice)) ? Number(normalizedPrice) : 0;
+  const categoryLabel = product.category || 'Shafiq Cards';
+  const totalPrice = priceValue * quantity;
 
   const backLink = '/invitations';
   const backText = 'Back to invitations';
@@ -228,7 +206,7 @@ const ProductDetails = () => {
   const handleAddToCart = () => {
     const item = {
       id: code,
-      name: `Invitation No: ${position}`,
+      name: product.title || `Invitation ${position}`,
       price: priceValue,
       quantity,
       image: Array.isArray(product.mediaUrls) ? product.mediaUrls[0] : '',
@@ -260,7 +238,7 @@ const ProductDetails = () => {
             {/* Right: Details */}
             <div className="flex flex-col">
               <h1 className="display-serif text-3xl font-bold mb-2">
-                Invitation No: {product.index}
+                {product.title || `Invitation ${product.index}`}
               </h1>
               <p className="text-sm text-gray-500 mb-2">Product Code: {code}</p>
               <p className="inline-block bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit">
@@ -269,17 +247,19 @@ const ProductDetails = () => {
 
               <div className="space-y-4 mb-8">
                 <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {formatDescription(description)}
+                  {formatDescription(cleanDescription || description)}
                 </div>
                 <div className="grid gap-2 text-sm text-gray-600">
                   <p>
                     <span className="font-semibold text-gray-900">Card Number:</span>{' '}
                     {parsedCardNumber}
                   </p>
-                  <p>
-                    <span className="font-semibold text-gray-900">Price:</span>{' '}
-                    {priceValue ? `PKR ${priceValue}` : 'N/A'}
-                  </p>
+                  {isAuthenticated() && product?.adminNote && (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <h2 className="text-sm font-semibold text-slate-900 mb-2">Admin Notes</h2>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">{product.adminNote}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

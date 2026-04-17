@@ -22,13 +22,16 @@ const AiChatbot = () => {
   ];
 
 
+  const normalizePrompt = (text) => String(text).replace(/\s+/g, ' ').trim();
+
   const sendPrompt = async () => {
-    if (!prompt.trim()) return;
+    const normalizedPrompt = normalizePrompt(prompt);
+    if (!normalizedPrompt) return;
     // add user message
-    setMessages((m) => [...m, { from: 'user', text: prompt }]);
+    setMessages((m) => [...m, { from: 'user', text: normalizedPrompt }]);
 
     // redirect logic based on keywords
-    const lower = prompt.toLowerCase();
+    const lower = normalizedPrompt.toLowerCase();
     // improved redirection: send to invitations whenever user mentions cards,
     // elegant/elegance keywords or explicit 'invitation'
     if (
@@ -37,11 +40,11 @@ const AiChatbot = () => {
       lower.includes('elegant') ||
       lower.includes('elegance')
     ) {
-      navigate(`/invitations?search=${encodeURIComponent(prompt)}`);
+      navigate(`/invitations?search=${encodeURIComponent(normalizedPrompt)}`);
     } else if (lower.includes('box') || lower.includes('corporate')) {
-      navigate('/box-packaging');
+      navigate(`/box-packaging?search=${encodeURIComponent(normalizedPrompt)}`);
     } else if (lower.includes('envelope')) {
-      navigate(`/envelopes?search=${encodeURIComponent(prompt)}`);
+      navigate(`/envelopes?search=${encodeURIComponent(normalizedPrompt)}`);
     }
 
     // user message added above; bot closing

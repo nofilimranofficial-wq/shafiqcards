@@ -19,8 +19,9 @@ const CorporateBoxes = () => {
   useEffect(() => {
     const loadBoxes = async () => {
       setInitialLoad(true);
+      setVisibleCount(15);
       try {
-        const { products } = await fetchProductsByCategory('box');
+        const { products } = await fetchProductsByCategory('box', 1, 100, search);
         setBoxes(
           products.map((p, idx) => ({
             src: p.mediaUrls[0] || '',
@@ -36,16 +37,13 @@ const CorporateBoxes = () => {
       }
     };
     loadBoxes();
-  }, []);
+  }, [search]);
   
-  // Filter valid boxes
   const filteredItems = boxes.map((box, idx) => ({ 
     ...box,
     originalIdx: idx,
     code: `SFC-Box-${1101 + idx}`
-  })).filter((item) => {
-    return item.code.toLowerCase().includes(search.toLowerCase()) || item.name.toLowerCase().includes(search.toLowerCase());
-  });
+  }));
   
   const containerRef = useRef(null);
   const cardRefs = useRef([]);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { fetchProductsByCategory } from '../config';
 
 const initialCategories = [
@@ -61,9 +62,20 @@ const CategoryCards = () => {
               {categories.map((category, index) => {
                 const isLarge = category.size === 'large';
                 const spanClass = isLarge ? 'lg:col-span-2' : 'col-span-1';
+                const targetRoute = category.type === 'invitation'
+                  ? '/invitations'
+                  : category.type === 'box'
+                  ? '/box-packaging'
+                  : category.type === 'envelope'
+                  ? '/envelopes'
+                  : category.type === 'reel'
+                  ? '/digital-invites'
+                  : '/';
+
                 return (
-                  <div
+                  <Link
                     key={index}
+                    to={targetRoute}
                     className={`group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 cursor-pointer ${spanClass}`}
                   >
                     {category.type === 'reel' && category.img ? (
@@ -96,7 +108,7 @@ const CategoryCards = () => {
                     <div className="absolute top-4 left-4 text-white text-sm font-semibold opacity-90">
                       {/* small corner label if needed */}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

@@ -145,9 +145,12 @@ const Header = () => {
 
           <div className="flex-1 w-full md:w-auto flex items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-serif font-medium tracking-tight text-[#c59d5f]">
-                Shafiq Cards.com
-              </div>
+              <Link
+                to="/"
+                className="text-3xl md:text-4xl font-serif font-medium tracking-tight text-[#c59d5f] hover:text-[#ae8d43] transition-colors"
+              >
+                Shafiqcards.com
+              </Link>
               <p className="text-sm md:text-base text-slate-500 mt-1">
                 Elegant invitations, premium packaging, and stunning digital reels.
               </p>

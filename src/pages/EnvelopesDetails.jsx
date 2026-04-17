@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { formatDescription } from '../utils/api';
+import { formatDescription, isAuthenticated, getToken } from '../utils/api';
 
 const ImageGallery = ({ images = [], alt = '' }) => {
   const cleanImages = Array.isArray(images) ? Array.from(new Set(images)) : [];
@@ -110,6 +110,7 @@ const EnvelopesDetails = () => {
   const productId = searchParams.get('id');
   const [item, setItem] = useState(null);
   const [description, setDescription] = useState('');
+  const [adminNote, setAdminNote] = useState('');
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [cart, setCart] = useState([]);
@@ -124,7 +125,7 @@ const EnvelopesDetails = () => {
   const defaultDescription = productType === 'boxes'
     ? 'Premium corporate packaging solution perfect for branded gifting and presentations.'
     : 'Beautiful and elegant envelope design perfect for your special occasions.';
-  const basePrice = productType === 'boxes' ? 850 : 200;
+  const basePrice = 0;
 
   useEffect(() => {
     const loadItem = async () => {
@@ -132,8 +133,14 @@ const EnvelopesDetails = () => {
       try {
         let fetchedProduct = null;
 
+        const authQuery = isAuthenticated() ? '?admin=true' : '';
+        const authHeaders = isAuthenticated()
+          ? { Authorization: `Bearer ${getToken()}` }
+          : {};
         if (productId) {
-          const res = await fetch(`${API_BASE_URL}/products/${productId}`);
+          const res = await fetch(`${API_BASE_URL}/products/${productId}${authQuery}`, {
+            headers: authHeaders,
+          });
           if (res.ok) {
             const data = await res.json();
             fetchedProduct = data.data.product;
@@ -141,7 +148,9 @@ const EnvelopesDetails = () => {
         }
 
         if (!fetchedProduct) {
-          const res = await fetch(`${API_BASE_URL}/products/category/${mappedCategory}`);
+          const res = await fetch(`${API_BASE_URL}/products/category/${mappedCategory}${authQuery}`, {
+            headers: authHeaders,
+          });
           if (res.ok) {
             const data = await res.json();
             const products = data.data.products;
@@ -159,9 +168,11 @@ const EnvelopesDetails = () => {
             index: idxNum,
             paths: Array.isArray(fetchedProduct.mediaUrls) ? fetchedProduct.mediaUrls : [],
             position: idxNum,
-            code: fetchedProduct.code
+            code: fetchedProduct.code,
+            title: fetchedProduct.title || `${title} ${idxNum}`
           });
           setDescription(fetchedProduct.description || defaultDescription);
+          setAdminNote(fetchedProduct.adminNote || '');
         }
       } catch (e) {
         console.error('Failed to load product details', e);
@@ -188,13 +199,11 @@ const EnvelopesDetails = () => {
   }
 
   const code = item.code || `${codePrefix}${productType === 'boxes' ? 1101 + item.position : 2101 + item.position}`;
-  const totalPrice = basePrice * quantity;
-
   const handleAddToCart = () => {
     const cartItem = {
       id: code,
-      name: `${title} No: ${item.index}`,
-      price: basePrice,
+      name: item.title || `${title} ${item.index}`,
+      price: 0,
       quantity,
       image: item.paths[0],
       type: productType
@@ -225,7 +234,7 @@ const EnvelopesDetails = () => {
 
             {/* Right: Details */}
             <div className="flex flex-col">
-              <h1 className="display-serif text-3xl font-bold mb-2">{title} No: {item.index}</h1>
+              <h1 className="display-serif text-3xl font-bold mb-2">{item.title || `${title} ${item.index}`}</h1>
               <p className="text-sm text-gray-500 mb-2">Product Code: {code}</p>
               <p className="inline-block bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit">
                 {category}
@@ -237,6 +246,13 @@ const EnvelopesDetails = () => {
               <p className="text-gray-700 mb-8 leading-relaxed">
                 {formatDescription(description)}
               </p>
+
+              {isAuthenticated() && adminNote && (
+                <div className="mb-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                  <h2 className="text-sm font-semibold text-slate-900 mb-2">Admin Notes</h2>
+                  <p className="text-sm text-slate-700 whitespace-pre-line">{adminNote}</p>
+                </div>
+              )}
 
               {/* Social Sharing */}
               <div className="border-t border-gray-200 pt-6">
