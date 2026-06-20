@@ -71,7 +71,7 @@ const App = () => {
           <Route path="/preview/:templateId" element={<TemplatePreview />} />
           <Route path="/create-invitation" element={<CreateInvitation />} />
           <Route path="/edit/:slug" element={<EditInvitation />} />
-            <Route path="/card/:index" element={<CardsDetails />} />
+          <Route path="/card/:index" element={<CardsDetails />} />
           <Route path="/product/:type/:index" element={<ProductDetailsRoute />} />
           <Route path="/weddingcards-in-pakistan" element={<SeoBlogPage />} />
           <Route path="/weddingcards-in-uae" element={<SeoBlogPage />} />

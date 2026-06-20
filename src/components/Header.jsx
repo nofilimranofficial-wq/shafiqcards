@@ -6,7 +6,7 @@ import InvitationLogin from './InvitationLogin';
 import logo from '../assets/golden.webp';
 
 const NAV = [
-    { to: '/', label: 'Home' },
+  { to: '/', label: 'Home' },
   { to: '/invitations', label: 'Invitations' },
   { to: '/box-packaging', label: 'Corporate Gifting & Packaging' },
   { to: '/envelopes', label: 'Envelopes' },

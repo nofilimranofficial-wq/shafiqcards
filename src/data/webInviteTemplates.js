@@ -35,10 +35,4 @@ export const TEMPLATES = [
     description: 'Dark cinematic elegance with a video-ready hero, rose-adorned love story timeline and atmospheric venue cards.',
     colors: { bg: '#0f0a1a', accent: '#9b72cf', text: '#e8dff5' },
   },
-  {
-    id: 'template7',
-    name: 'Golden Hour',
-    description: 'Warm honey tones with a beautiful love journey layout, captured moments gallery and graceful reservation flow.',
-    colors: { bg: '#1a1508', accent: '#d4a843', text: '#f5ecd0' },
-  },
 ];

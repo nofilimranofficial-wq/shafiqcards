@@ -101,12 +101,12 @@ const InvitationPage = () => {
         <p style={{ color: 'rgba(255,255,255,0.4)', maxWidth: 380 }}>
           The link you followed may be incorrect or this invitation may no longer be available.
         </p>
-        <a href="/web-invites" style={{
+        <a href="/" style={{
           marginTop: 16, padding: '14px 36px', borderRadius: 999,
           background: 'linear-gradient(90deg, #c59d5f, #b8863f)',
           color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.1em',
         }}>
-          Create Your Invitation
+          Back to Home
         </a>
       </div>
     );

@@ -70,7 +70,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
       const data = await response.json();
       if (data.success) {
         clearInvitationAuth();
-        navigate('/web-invites');
+        navigate('/');
       } else {
         alert(data.message || 'Failed to delete invitation');
       }
@@ -142,7 +142,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
         gap: '8px'
       }}>
         <button
-          onClick={() => navigate('/web-invites')}
+          onClick={() => navigate('/')}
           disabled={isLoading}
           style={{
             background: 'transparent',
