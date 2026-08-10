@@ -254,7 +254,10 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
         </div>
 
         <div className="space-y-4">
-          <div id="google-login-button" className="mx-auto max-w-70" />
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-center shadow-sm">
+            <p className="text-sm font-semibold text-slate-700">Continue with Google</p>
+            <div id="google-login-button" className="mx-auto mt-4" />
+          </div>
           <div className="text-center text-sm text-slate-500">or login with email and password</div>
         </div>
 
@@ -306,7 +309,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <div className="text-center text-sm text-slate-500">Signing in with Google...</div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 flex-col sm:flex-row">
             <button
               type="button"
               onClick={onClose}
@@ -317,7 +320,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-slate-950 font-semibold hover:from-amber-300 hover:via-amber-200 hover:to-amber-400 transition disabled:opacity-50"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
