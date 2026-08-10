@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import { setInvitationAuth } from '../utils/invitationAuth';
 import { TEMPLATES } from '../data/webInviteTemplates';
 
 const emptyEvent = () => ({ name: '', date: '', time: '', venue: '' });
@@ -24,6 +25,10 @@ const StepIndicator = ({ step }) => (
     ))}
   </div>
 );
+
+const MAX_MEDIA_FILES = 5;
+const MAX_MEDIA_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime'];
 
 const CreateInvitation = () => {
   const navigate = useNavigate();
@@ -125,6 +130,24 @@ const CreateInvitation = () => {
     };
   }, [step]);
 
+  const validateMediaFiles = (files) => {
+    if (!files || files.length === 0) return null;
+    if (files.length > MAX_MEDIA_FILES) {
+      return `Please upload at most ${MAX_MEDIA_FILES} files.`;
+    }
+
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
+        return `Unsupported file type: ${file.type}. Allowed types are JPG, PNG, WEBP, MP4, MOV.`;
+      }
+      if (file.size > MAX_MEDIA_FILE_SIZE) {
+        return `Each file must be smaller than 10 MB. ${file.name} is too large.`;
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setError('');
@@ -136,6 +159,14 @@ const CreateInvitation = () => {
       setError('Bride name and Groom name are required.');
       return;
     }
+
+    const mediaInput = document.getElementById('media-upload');
+    const mediaError = validateMediaFiles(mediaInput?.files);
+    if (mediaError) {
+      setError(mediaError);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -149,7 +180,6 @@ const CreateInvitation = () => {
       formData.append('description', form.description.trim());
       const events = form.events.filter((ev) => ev.name.trim());
       formData.append('events', JSON.stringify(events));
-      const mediaInput = document.getElementById('media-upload');
       if (mediaInput?.files) {
         Array.from(mediaInput.files).forEach((file) => formData.append('media', file));
       }
@@ -163,6 +193,11 @@ const CreateInvitation = () => {
         setError(data.message || 'Failed to create invitation.');
         return;
       }
+      setInvitationAuth({
+        token: data.token,
+        slug: data.slug,
+        invitation: data.invitation,
+      });
       navigate(`/${data.slug}`);
     } catch (err) {
       setError('Could not connect to the server. Please try again later.');
@@ -274,7 +309,14 @@ const CreateInvitation = () => {
                 </div>
                 <div>
                   <label className="mb-2 block text-[11px] uppercase tracking-[0.35em] text-slate-500">Media Upload</label>
-                  <input id="media-upload" type="file" multiple className="w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#c59d5f] focus:ring focus:ring-[#c59d5f]/30" />
+                  <input
+                    id="media-upload"
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime"
+                    className="w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#c59d5f] focus:ring focus:ring-[#c59d5f]/30"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">Max {MAX_MEDIA_FILES} files, max 10 MB each.</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
