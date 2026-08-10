@@ -91,9 +91,9 @@ export const getTrafficSummary = async () => {
   return data.data;
 };
 
-// Delete web invitation
+// Delete web invitation as admin
 export const deleteWebInvitation = async (slug) => {
-  const res = await fetch(`${API_BASE_URL}/web-invitations/${slug}`, {
+  const res = await fetch(`${API_BASE_URL}/web-invitations/${slug}/admin`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${getToken()}` }
   });
