@@ -138,8 +138,8 @@ const Header = () => {
 
       {/* Main header: logo on the left and brand text centered with accent colors */}
       <div className={`border-b border-slate-100 transform transition-transform duration-300 ease-in-out ${compact ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="max-w-7xl mx-auto px-6 py-4 md:py-0 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-          <Link to="/" className="flex items-center gap-3 flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-6 py-4 md:py-0 flex flex-col md:flex-row items-center gap-4 md:gap-6">
+          <Link to="/" className="flex items-center gap-3 flex-shrink-0 mx-auto md:mx-0">
             <img src={logo} alt="Shafiq Cards Logo" className="h-24 object-contain" />
           </Link>
 
