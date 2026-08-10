@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { clearInvitationAuth } from '../utils/invitationAuth';
 
 const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const buttonClasses =
+    'rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60';
 
   const handleLogout = async () => {
     try {
@@ -83,230 +87,132 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)',
-      color: 'white',
-      padding: '8px 20px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      fontSize: '14px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      {/* Left side - Logo/Title */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px'
-      }}>
-        <span style={{
-          fontSize: '18px',
-          fontWeight: 'bold',
-          color: '#c59d5f'
-        }}>
-          💒
-        </span>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <span style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#c59d5f'
-          }}>
-            Wedding Admin
-          </span>
-          {invitationData?.email && (
-            <span style={{
-              fontSize: '12px',
-              color: '#a0aec0',
-              fontWeight: '400'
-            }}>
-              {invitationData.email}
-            </span>
-          )}
+    <div className="fixed inset-x-0 top-0 z-50 bg-slate-950/95 text-white shadow-2xl backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">💒</span>
+            <div>
+              <p className="text-base font-semibold text-amber-300">Wedding Admin</p>
+              {invitationData?.email && (
+                <p className="text-xs text-slate-300">{invitationData.email}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Home
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/edit/${slug}`)}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleToggleStatus}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Toggle Status
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Logout
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/10 md:hidden"
+            aria-expanded={menuOpen}
+            aria-label="Toggle admin menu"
+          >
+            <span className="material-symbols-outlined">{menuOpen ? 'close' : 'menu'}</span>
+          </button>
         </div>
-      </div>
 
-      {/* Right side - Menu Items */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}>
-        <button
-          onClick={() => navigate('/')}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            color: '#e2e8f0',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            opacity: isLoading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'rgba(255,255,255,0.1)';
-              e.target.style.color = '#c59d5f';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#e2e8f0';
-            }
-          }}
-          title="Go to Home"
-        >
-           Home
-        </button>
-
-        <button
-          onClick={() => navigate(`/edit/${slug}`)}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            color: '#e2e8f0',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            opacity: isLoading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'rgba(255,255,255,0.1)';
-              e.target.style.color = '#c59d5f';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#e2e8f0';
-            }
-          }}
-          title="Edit Invitation"
-        >
-           Edit
-        </button>
-
-        <button
-          onClick={handleToggleStatus}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            color: '#e2e8f0',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            opacity: isLoading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'rgba(255,255,255,0.1)';
-              e.target.style.color = '#fbb6ce';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#e2e8f0';
-            }
-          }}
-          title="Disable/Enable Invitation"
-        >
-           Toggle Status
-        </button>
-
-        <button
-          onClick={handleDelete}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            color: '#e2e8f0',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            opacity: isLoading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'rgba(255,255,255,0.1)';
-              e.target.style.color = '#fc8181';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#e2e8f0';
-            }
-          }}
-          title="Delete Invitation"
-        >
-           Delete
-        </button>
-
-        <div style={{
-          width: '1px',
-          height: '20px',
-          background: 'rgba(255,255,255,0.2)',
-          margin: '0 8px'
-        }} />
-
-        <button
-          onClick={handleLogout}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            color: '#e2e8f0',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            opacity: isLoading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'rgba(255,255,255,0.1)';
-              e.target.style.color = '#68d391';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isLoading) {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#e2e8f0';
-            }
-          }}
-          title="Logout"
-        >
-           Logout
-        </button>
+        {menuOpen && (
+          <div className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-slate-950/95 p-3 md:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/');
+                setMenuOpen(false);
+              }}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Home
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                navigate(`/edit/${slug}`);
+                setMenuOpen(false);
+              }}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleToggleStatus();
+                setMenuOpen(false);
+              }}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Toggle Status
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleDelete();
+                setMenuOpen(false);
+              }}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleLogout();
+                setMenuOpen(false);
+              }}
+              disabled={isLoading}
+              className={buttonClasses}
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
