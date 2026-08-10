@@ -91,6 +91,17 @@ export const getTrafficSummary = async () => {
   return data.data;
 };
 
+// Delete web invitation
+export const deleteWebInvitation = async (slug) => {
+  const res = await fetch(`${API_BASE_URL}/web-invitations/${slug}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${getToken()}` }
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to delete invitation');
+  return data;
+};
+
 // Admin list
 export const getAdminList = async () => {
   const res = await fetch(`${API_BASE_URL}/admin/list`, {
