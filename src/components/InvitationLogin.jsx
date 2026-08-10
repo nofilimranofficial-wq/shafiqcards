@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 
 const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
@@ -10,6 +10,98 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [resetStep, setResetStep] = useState(1); // 1: email, 2: code, 3: new password
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const decodeJwt = (token) => {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decodeURIComponent(decoded.split('').map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`).join('')));
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const handleGoogleCredential = async (response) => {
+    if (!response?.credential) {
+      setError('Google sign-in failed. Please try again.');
+      return;
+    }
+
+    setError('');
+    setGoogleLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/web-invitations/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Google login failed');
+      }
+
+      const authData = {
+        token: data.token,
+        slug: data.invitation.slug,
+        invitation: data.invitation,
+      };
+
+      localStorage.setItem('invitationAuth', JSON.stringify(authData));
+      document.cookie = `invitationAuth=${encodeURIComponent(JSON.stringify(authData))}; max-age=${60 * 60 * 24 * 7}; path=/; samesite=lax`;
+      onLoginSuccess(data.invitation);
+      onClose();
+      setForm({ email: '', password: '' });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const initGoogleLoginButton = () => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!googleClientId) {
+      setError('Google client ID is not configured. Add VITE_GOOGLE_CLIENT_ID to Client/.env.');
+      return;
+    }
+    if (!window.google?.accounts?.id) return;
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredential,
+      ux_mode: 'popup',
+    });
+
+    window.google.accounts.id.renderButton(document.getElementById('google-login-button'), {
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'pill',
+      width: 280,
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (window.google?.accounts?.id) {
+      initGoogleLoginButton();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogleLoginButton;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [isOpen]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -158,7 +250,12 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
       <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-900">Login to Edit Invitation</h2>
-          <p className="text-slate-600 mt-2">Enter your email and password</p>
+          <p className="text-slate-600 mt-2">Use Google login or your invitation password to continue.</p>
+        </div>
+
+        <div className="space-y-4">
+          <div id="google-login-button" className="mx-auto max-w-70" />
+          <div className="text-center text-sm text-slate-500">or login with email and password</div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -205,6 +302,9 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
               Forgot Password?
             </button>
           </div>
+          {googleLoading && (
+            <div className="text-center text-sm text-slate-500">Signing in with Google...</div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <button
