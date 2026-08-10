@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getTrafficSummary } from '../../utils/api';
+import { getTrafficSummary, deleteWebInvitation } from '../../utils/api';
 
 const Traffic = () => {
   const [traffic, setTraffic] = useState(null);
@@ -37,7 +37,7 @@ const Traffic = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
+      <div className="bg-white border border-slate-200 p-8 rounded-4xl shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 display-serif">Traffic Insights</h1>
@@ -53,17 +53,17 @@ const Traffic = () => {
       </div>
 
       {error ? (
-        <div className="rounded-[2rem] bg-rose-50 border border-rose-100 p-8 text-rose-700">
+        <div className="rounded-4xl bg-rose-50 border border-rose-100 p-8 text-rose-700">
           {error}
         </div>
       ) : loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[280px] rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col items-center justify-center min-h-70 rounded-4xl border border-slate-200 bg-white shadow-sm">
           <div className="w-12 h-12 border-4 border-slate-200 border-t-amber-500 rounded-full animate-spin"></div>
           <p className="text-slate-500 font-medium uppercase tracking-widest mt-4">Loading traffic summary...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_0.6fr] gap-6">
-          <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-8 overflow-x-auto">
+          <div className="bg-white border border-slate-200 rounded-4xl shadow-sm p-8 overflow-x-auto">
             <div className="flex items-center justify-between mb-8 gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">Invitation Traffic</h2>
@@ -81,6 +81,7 @@ const Traffic = () => {
                   <th className="px-6 py-4">Invitation</th>
                   <th className="px-6 py-4 hidden lg:table-cell">Last Visit</th>
                   <th className="px-6 py-4 text-right">Total Views</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -94,6 +95,38 @@ const Traffic = () => {
                     <td className="px-6 py-5 text-right">
                       <span className="inline-flex items-center justify-center rounded-full bg-slate-100 text-slate-900 px-3 py-1 text-sm font-semibold">{item.totalViews}</span>
                     </td>
+                    <td className="px-6 py-5 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => window.open(`${window.location.origin}/${item.slug}`, '_blank')}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!window.confirm(`Delete invitation for ${item.couple}? This cannot be undone.`)) return;
+                          try {
+                            setError('');
+                            setLoading(true);
+                            await deleteWebInvitation(item.slug);
+                            setTraffic((prev) => ({
+                              ...prev,
+                              invitations: prev.invitations.filter((invite) => invite.slug !== item.slug)
+                            }));
+                          } catch (err) {
+                            console.error(err);
+                            setError(err.message || 'Failed to delete invitation');
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-600 hover:bg-rose-100 transition"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -101,7 +134,7 @@ const Traffic = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-8">
+            <div className="bg-white border border-slate-200 rounded-4xl shadow-sm p-8">
               <h3 className="text-xl font-bold text-slate-900 mb-4">Top Referrers</h3>
               <div className="space-y-4">
                 {traffic.invitations.slice(0, 4).map((item) => {
@@ -127,7 +160,7 @@ const Traffic = () => {
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-8">
+            <div className="bg-white border border-slate-200 rounded-4xl shadow-sm p-8">
               <h3 className="text-xl font-bold text-slate-900 mb-4">Traffic Snapshot</h3>
               <div className="space-y-3 text-sm text-slate-500">
                 <p><span className="font-semibold text-slate-900">Total Invitations:</span> {traffic.invitations.length}</p>
