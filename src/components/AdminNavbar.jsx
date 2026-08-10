@@ -10,6 +10,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
 
   const buttonClasses =
     'rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60';
+  const mobileButtonClasses = `${buttonClasses} w-full text-left`;
 
   const handleLogout = async () => {
     try {
@@ -143,15 +144,18 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/10 md:hidden"
-            aria-expanded={menuOpen}
-            aria-label="Toggle admin menu"
-          >
-            <span className="material-symbols-outlined">{menuOpen ? 'close' : 'menu'}</span>
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <span className="text-sm text-slate-300">Menu</span>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/10"
+              aria-expanded={menuOpen}
+              aria-label="Toggle admin menu"
+            >
+              {menuOpen ? '✕' : '☰'}
+            </button>
+          </div>
         </div>
 
         {menuOpen && (
@@ -163,7 +167,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
                 setMenuOpen(false);
               }}
               disabled={isLoading}
-              className={buttonClasses}
+              className={mobileButtonClasses}
             >
               Home
             </button>
@@ -174,7 +178,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
                 setMenuOpen(false);
               }}
               disabled={isLoading}
-              className={buttonClasses}
+              className={mobileButtonClasses}
             >
               Edit
             </button>
@@ -185,7 +189,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
                 setMenuOpen(false);
               }}
               disabled={isLoading}
-              className={buttonClasses}
+              className={mobileButtonClasses}
             >
               Toggle Status
             </button>
@@ -196,7 +200,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
                 setMenuOpen(false);
               }}
               disabled={isLoading}
-              className={buttonClasses}
+              className={mobileButtonClasses}
             >
               Delete
             </button>
@@ -207,7 +211,7 @@ const AdminNavbar = ({ slug, invitationAuth, onStatusChange, invitationData }) =
                 setMenuOpen(false);
               }}
               disabled={isLoading}
-              className={buttonClasses}
+              className={mobileButtonClasses}
             >
               Logout
             </button>
