@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { isAuthenticated } from '../utils/api';
+import { clearInvitationAuth } from '../utils/invitationAuth';
 import InvitationLogin from './InvitationLogin';
 import logo from '../assets/golden.webp';
 
@@ -29,10 +30,11 @@ const Header = () => {
 
   const handleLoginSuccess = (invitation) => {
     setInvitationAuth(invitation);
+    navigate(`/${invitation.slug}`);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('invitationAuth');
+    clearInvitationAuth();
     setInvitationAuth(null);
     navigate('/');
   };
@@ -175,6 +177,22 @@ const Header = () => {
             >
               <span className="material-symbols-outlined">{searchOpen ? 'close' : 'search'}</span>
             </button>
+
+            {!invitationAuth ? (
+              <button
+                onClick={() => setLoginModal(true)}
+                className="hidden md:inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-200/30 hover:from-amber-300 hover:via-amber-200 hover:to-amber-400 transition"
+              >
+                Sign In
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate(`/${invitationAuth.slug}`)}
+                className="hidden md:inline-flex items-center gap-2 rounded-full border border-amber-400 bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-amber-50 transition"
+              >
+                My Invite
+              </button>
+            )}
 
             <button
               aria-expanded={open}
