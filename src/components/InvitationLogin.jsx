@@ -269,7 +269,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <input
               type="email"
               required
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#c59d5f] focus:border-transparent"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7c5a27] focus:border-transparent"
               value={form.email}
               onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
               placeholder="your-email@example.com"
@@ -283,7 +283,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <input
               type="password"
               required
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#c59d5f] focus:border-transparent"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7c5a27] focus:border-transparent"
               value={form.password}
               onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
               placeholder="Your invitation password"
@@ -300,7 +300,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
-              className="text-[#c59d5f] hover:text-[#b8863f] text-sm font-medium"
+              className="text-[#7c5a27] hover:text-[#63471f] text-sm font-medium"
             >
               Forgot Password?
             </button>
@@ -320,7 +320,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-slate-950 font-semibold hover:from-amber-300 hover:via-amber-200 hover:to-amber-400 transition disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-lg bg-[#7c5a27] text-white font-semibold hover:bg-[#63471f] transition disabled:opacity-50"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
@@ -349,7 +349,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
                     <input
                       type="email"
                       required
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#c59d5f] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7c5a27] focus:border-transparent"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       placeholder="your-email@example.com"
@@ -373,7 +373,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 px-4 py-3 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition disabled:opacity-50"
+                      className="flex-1 px-4 py-3 bg-[#7c5a27] text-white rounded-lg hover:bg-[#63471f] transition disabled:opacity-50"
                     >
                       {loading ? 'Sending...' : 'Send Code'}
                     </button>
@@ -415,7 +415,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 px-4 py-3 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition disabled:opacity-50"
+                      className="flex-1 px-4 py-3 bg-[#7c5a27] text-white rounded-lg hover:bg-[#63471f] transition disabled:opacity-50"
                     >
                       {loading ? 'Verifying...' : 'Verify Code'}
                     </button>
@@ -457,7 +457,7 @@ const InvitationLogin = ({ isOpen, onClose, onLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 px-4 py-3 bg-[#c59d5f] text-white rounded-lg hover:bg-[#b8863f] transition disabled:opacity-50"
+                      className="flex-1 px-4 py-3 bg-[#7c5a27] text-white rounded-lg hover:bg-[#63471f] transition disabled:opacity-50"
                     >
                       {loading ? 'Resetting...' : 'Reset Password'}
                     </button>
