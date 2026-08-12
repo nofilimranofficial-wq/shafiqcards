@@ -181,14 +181,14 @@ const Header = () => {
             {!invitationAuth ? (
               <button
                 onClick={() => setLoginModal(true)}
-                className="hidden md:inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-200/30 hover:from-amber-300 hover:via-amber-200 hover:to-amber-400 transition"
+                className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#7c5a27] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-[#7c5a27]/30 hover:bg-[#63471f] transition"
               >
                 Sign In
               </button>
             ) : (
               <button
                 onClick={() => navigate(`/${invitationAuth.slug}`)}
-                className="hidden md:inline-flex items-center gap-2 rounded-full border border-amber-400 bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-amber-50 transition"
+                className="hidden md:inline-flex items-center gap-2 rounded-full border border-[#7c5a27] bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-[#f1e7da] transition"
               >
                 My Invite
               </button>
